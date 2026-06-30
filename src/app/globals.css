@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════
+   DESIGN SYSTEM — TOOLIFY 3D
+   ═══════════════════════════════════════════ */
+
+@theme inline {
+  /* ── Colors (strict palette) ── */
+  --color-brand: #1DB954;
+  --color-brand-dark: #15883C;
+  --color-dark: #0D0D0D;
+  --color-alt-bg: #F5F5F5;
+  --color-text-secondary: #3D3D3D;
+  --color-muted: #9E9E9E;
+  --color-border: #E5E5E5;
+  --color-border-dark: #2A2A2A;
+
+  /* ── Typography ── */
+  --font-display: 'Oxanium', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* ── Border Radius (sharp — max 4px) ── */
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-DEFAULT: 2px;
+  --radius-md: 4px;
+}
+
+/* ── Base ── */
+body {
+  background: #ffffff;
+  color: #0D0D0D;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+section {
+  position: relative;
+}
+
+/* ── Material Symbols ── */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════ */
+
+/* Marquee ticker */
+.marquee-content {
+  display: flex;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* 3D Wireframe Cube */
+.cube-wireframe {
+  perspective: 1000px;
+}
+
+.cube-inner {
+  width: 300px;
+  height: 300px;
+  position: relative;
+  transform-style: preserve-3d;
+  animation: rotateCube 20s infinite linear;
+}
+
+.cube-face {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border: 2px solid #1DB954;
+  background: rgba(29, 185, 84, 0.04);
+}
+
+@keyframes rotateCube {
+  from { transform: rotateX(0deg) rotateY(0deg); }
+  to { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+.face-front  { transform: translateZ(150px); }
+.face-back   { transform: rotateY(180deg) translateZ(150px); }
+.face-right  { transform: rotateY(90deg) translateZ(150px); }
+.face-left   { transform: rotateY(-90deg) translateZ(150px); }
+.face-top    { transform: rotateX(90deg) translateZ(150px); }
+.face-bottom { transform: rotateX(-90deg) translateZ(150px); }
+
+/* ═══════════════════════════════════════════
+   PATTERNS & DECORATIONS
+   ═══════════════════════════════════════════ */
+
+.dashed-connector {
+  background-image: linear-gradient(to right, #1DB954 50%, transparent 50%);
+  background-size: 8px 1px;
+  background-repeat: repeat-x;
+}
+
+.diagonal-stripes {
+  background-image: repeating-linear-gradient(
+    45deg, #1DB954, #1DB954 1px, transparent 1px, transparent 10px
+  );
+}
+
+.dot-pattern {
+  background-image: radial-gradient(#1DB954 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.wave-pattern {
+  background: radial-gradient(
+    circle at 10px 10px,
+    transparent 8px, #1DB954 8px, #1DB954 10px, transparent 10px
+  );
+  background-size: 20px 20px;
+}
+
+/* ═══════════════════════════════════════════
+   RANGE INPUT STYLING
+   ═══════════════════════════════════════════ */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  background: #E5E5E5;
+  border-radius: 2px;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #1DB954;
+  border: 2px solid #0D0D0D;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #1DB954;
+  border: 2px solid #0D0D0D;
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-content,
+  .cube-inner {
+    animation: none !important;
+  }
+}
