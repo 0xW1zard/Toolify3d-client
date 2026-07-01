@@ -2,8 +2,16 @@
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/ui/Navbar';
-import Footer from '@/components/ui/Footer';
+import PageShell from '@/components/layout/PageShell';
+import {
+  useGsap,
+  loadGsap,
+  prefersReducedMotion,
+  fadeUpOnScroll,
+  fadeFromHidden,
+  fadeInPanel,
+  fadeOut,
+} from '@/lib/gsap';
 
 const CATEGORIES = ['ALL', 'HOBBY', 'FUNCTIONAL', 'CUSTOM', 'COSPLAY', 'MINIATURES'];
 const MATERIAL_FILTERS = ['PLA+', 'PETG', 'TPU'];
@@ -214,29 +222,23 @@ export default function ProductsPage() {
   }, []);
 
   const closeModal = useCallback(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const reset = () => {
       setModalOpen(false);
       setSelectedProduct(null);
+    };
+
+    if (prefersReducedMotion() || !modalPanelRef.current) {
+      reset();
       return;
     }
 
     const run = async () => {
-      const { gsap } = await import('gsap');
+      const { gsap } = await loadGsap();
       if (!modalPanelRef.current) {
-        setModalOpen(false);
-        setSelectedProduct(null);
+        reset();
         return;
       }
-      gsap.to(modalPanelRef.current, {
-        y: 20,
-        opacity: 0,
-        duration: 0.3,
-        ease: 'power2.in',
-        onComplete: () => {
-          setModalOpen(false);
-          setSelectedProduct(null);
-        },
-      });
+      fadeOut(gsap, modalPanelRef.current, reset);
     };
     run();
   }, []);
@@ -250,114 +252,33 @@ export default function ProductsPage() {
 
   useEffect(() => {
     if (!modalOpen || !selectedProduct) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (prefersReducedMotion()) return;
 
     const run = async () => {
-      const { gsap } = await import('gsap');
-      if (modalPanelRef.current) {
-        gsap.fromTo(
-          modalPanelRef.current,
-          { y: 50, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }
-        );
-      }
+      const { gsap } = await loadGsap();
+      if (modalPanelRef.current) fadeInPanel(gsap, modalPanelRef.current);
     };
     run();
   }, [modalOpen, selectedProduct]);
 
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    let ctx;
-    const init = async () => {
-      const { gsap } = await import('gsap');
-      const { ScrollTrigger } = await import('gsap/ScrollTrigger');
-      gsap.registerPlugin(ScrollTrigger);
-
-      ctx = gsap.context(() => {
-        gsap.from('.products-hero-label', {
-          y: 20,
-          opacity: 0,
-          duration: 0.6,
-          ease: 'power2.out',
-          delay: 0.1,
-        });
-
-        gsap.from('.products-hero-title', {
-          x: -40,
-          opacity: 0,
-          duration: 0.8,
-          ease: 'power3.out',
-          delay: 0.2,
-        });
-
-        gsap.from('.products-stat-box', {
-          y: 24,
-          opacity: 0,
-          duration: 0.6,
-          stagger: 0.1,
-          ease: 'back.out(1.4)',
-          delay: 0.35,
-        });
-
-        gsap.from('.products-sidebar', {
-          x: -30,
-          opacity: 0,
-          duration: 0.7,
-          ease: 'power2.out',
-          delay: 0.3,
-        });
-
-        gsap.from('.products-toolbar', {
-          y: 16,
-          opacity: 0,
-          duration: 0.5,
-          ease: 'power2.out',
-          delay: 0.4,
-        });
-
-        gsap.to('.product-card', {
-          y: 0,
-          opacity: 1,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: 'power2.out',
-          delay: 0.5,
-        });
-
-        gsap.from('.products-cta', {
-          scrollTrigger: {
-            trigger: '.products-cta',
-            start: 'top 85%',
-            once: true,
-          },
-          y: 40,
-          opacity: 0,
-          duration: 0.7,
-          ease: 'power2.out',
-        });
-      }, pageRef);
-    };
-    init();
-
-    return () => {
-      if (ctx) ctx.revert();
-    };
-  }, []);
+  useGsap((gsap) => {
+    gsap.from('.products-hero-label', { y: 20, opacity: 0, duration: 0.6, ease: 'power2.out', delay: 0.1 });
+    gsap.from('.products-hero-title', { x: -40, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.2 });
+    gsap.from('.products-stat-box', { y: 24, opacity: 0, duration: 0.6, stagger: 0.1, ease: 'back.out(1.4)', delay: 0.35 });
+    gsap.from('.products-sidebar', { x: -30, opacity: 0, duration: 0.7, ease: 'power2.out', delay: 0.3 });
+    gsap.from('.products-toolbar', { y: 16, opacity: 0, duration: 0.5, ease: 'power2.out', delay: 0.4 });
+    gsap.to('.product-card', { y: 0, opacity: 1, duration: 0.8, stagger: 0.1, ease: 'power2.out', delay: 0.5 });
+    fadeUpOnScroll(gsap, '.products-cta', { y: 40, duration: 0.7 });
+  }, [], { scopeRef: pageRef });
 
   useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (prefersReducedMotion()) return;
 
     const run = async () => {
-      const { gsap } = await import('gsap');
+      const { gsap } = await loadGsap();
       const cards = gridRef.current?.querySelectorAll('.product-card');
       if (!cards?.length) return;
-
-      gsap.fromTo(
-        cards,
-        { opacity: 0, y: 16 },
-        { opacity: 1, y: 0, duration: 0.4, stagger: 0.06, ease: 'power2.out' }
-      );
+      fadeFromHidden(gsap, cards);
     };
     run();
   }, [filteredProducts, viewMode]);
@@ -367,8 +288,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <>
-      <Navbar />
+    <PageShell>
       <div ref={pageRef} className="bg-white text-on-background">
         {/* Page Header */}
         <header className="bg-surface-container-lowest border-b border-outline-variant py-10 w-full relative">
@@ -669,8 +589,6 @@ export default function ProductsPage() {
           </div>
         </div>
       )}
-
-      <Footer />
-    </>
+    </PageShell>
   );
 }

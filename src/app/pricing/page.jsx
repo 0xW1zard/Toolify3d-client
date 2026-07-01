@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/ui/Navbar';
-import Footer from '@/components/ui/Footer';
+import PageShell from '@/components/layout/PageShell';
+import { useGsap, fadeUpOnMount, fadeUpOnScroll } from '@/lib/gsap';
 
 const MATERIALS = [
   { name: 'PLA+', rate: 5, tag: 'Precision' },
@@ -119,21 +119,24 @@ export default function PricingPage() {
   const weightDisplay = isCalculating ? 'Calculating...' : weight ? `${weight} g` : '-- g';
   const timeDisplay = isCalculating ? '-- hrs' : printTime ?? '-- hrs';
 
+  useGsap((gsap) => {
+    fadeUpOnMount(gsap, '.pricing-hero-reveal', { y: 30 });
+    fadeUpOnScroll(gsap, '.reveal-on-scroll');
+  }, []);
+
   return (
-    <>
-      <Navbar />
-      <main className="bg-background text-on-surface font-body overflow-x-hidden">
+    <PageShell mainClassName="bg-background text-on-surface font-body overflow-x-hidden">
         {/* HERO & CALCULATOR */}
         <section className="bg-[#0D0D0D] py-xl text-white relative overflow-hidden">
-          <div className="max-w-7xl mx-auto px-gutter relative z-10">
+          <div className="max-w-container-max mx-auto px-margin-page relative z-10">
             <div className="flex flex-col items-center mb-lg">
-              <span className="font-mono text-xs text-[#1DB954] mb-sm tracking-widest uppercase animate-pulse">
+              <span className="pricing-hero-reveal font-mono text-xs text-[#1DB954] mb-sm tracking-widest uppercase animate-pulse">
                 {'// INSTANT_QUOTE'}
               </span>
-              <h1 className="font-display font-extrabold text-[40px] md:text-[64px] text-center leading-none mb-md max-w-4xl tracking-tight">
+              <h1 className="pricing-hero-reveal font-display font-extrabold text-[48px] md:text-[64px] text-center leading-none mb-md max-w-4xl tracking-tight">
                 Upload. Price. Print.
               </h1>
-              <p className="font-body text-lg text-white/60 text-center max-w-5xl">
+              <p className="pricing-hero-reveal font-body text-lg text-white/60 text-center max-w-5xl">
                 Get immediate industrial-grade 3D printing estimates. Select your material and upload your STL file to begin.
               </p>
             </div>
@@ -254,7 +257,7 @@ export default function PricingPage() {
 
         {/* PRICING TABLE */}
         <section className="bg-white py-xl">
-          <div className="max-w-7xl mx-auto px-gutter">
+          <div className="max-w-container-max mx-auto px-margin-page reveal-on-scroll">
             <div className="mb-lg">
               <span className="font-mono text-xs text-primary uppercase mb-sm block tracking-widest">
                 {'// PRICE_TABLE'}
@@ -300,7 +303,7 @@ export default function PricingPage() {
 
         {/* HOW IT WORKS */}
         <section className="bg-surface-container-low py-xl relative">
-          <div className="max-w-7xl mx-auto px-gutter relative z-10">
+          <div className="max-w-container-max mx-auto px-margin-page relative z-10 reveal-on-scroll">
             <div className="text-center mb-xl">
               <span className="font-mono text-xs text-primary uppercase mb-sm block tracking-widest">
                 {'// HOW_IT_WORKS'}
@@ -334,7 +337,7 @@ export default function PricingPage() {
 
         {/* ADD-ONS & NOTES */}
         <section className="bg-white py-xl border-t border-outline-variant">
-          <div className="max-w-7xl mx-auto px-gutter">
+          <div className="max-w-container-max mx-auto px-margin-page reveal-on-scroll">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
               {/* Left: Modeling Add-on */}
               <div className="bg-surface-container-low p-lg flex flex-col justify-between border border-outline-variant">
@@ -409,7 +412,7 @@ export default function PricingPage() {
 
         {/* CTA STRIP */}
         <section className="bg-white border-t border-outline-variant py-md">
-          <div className="max-w-7xl mx-auto px-gutter flex flex-col md:flex-row justify-between items-center gap-md">
+          <div className="max-w-container-max mx-auto px-margin-page flex flex-col md:flex-row justify-between items-center gap-md">
             <div className="flex items-center gap-sm">
               <div className="w-2 h-2 bg-[#1DB954] rounded-full animate-pulse" />
               <span className="font-display font-semibold text-lg uppercase tracking-tight">
@@ -435,8 +438,6 @@ export default function PricingPage() {
             </div>
           </div>
         </section>
-      </main>
-      <Footer />
-    </>
+    </PageShell>
   );
 }

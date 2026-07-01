@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import Navbar from '@/components/ui/Navbar';
-import Footer from '@/components/ui/Footer';
-import { FaSquareWhatsapp } from "react-icons/fa6";<FaSquareWhatsapp />
+import { useRef, useState } from 'react';
+import PageShell from '@/components/layout/PageShell';
+import PageHero from '@/components/ui/PageHero';
+import { useGsap, fadeUpOnMount, fadeUpOnScroll, staggerRevealOnScroll } from '@/lib/gsap';
+import { FaSquareWhatsapp } from "react-icons/fa6";
 
 
 const MATERIAL_OPTIONS = [
@@ -78,116 +79,26 @@ export default function ContactPage() {
     e.preventDefault();
   };
 
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    let ctx;
-    const init = async () => {
-      const { gsap } = await import('gsap');
-      const { ScrollTrigger } = await import('gsap/ScrollTrigger');
-      gsap.registerPlugin(ScrollTrigger);
-
-      ctx = gsap.context(() => {
-        gsap.from('.contact-hero-reveal', {
-          y: 40,
-          opacity: 0,
-          duration: 0.8,
-          stagger: 0.12,
-          ease: 'power3.out',
-          delay: 0.15,
-        });
-
-        gsap.from('.contact-form-reveal', {
-          scrollTrigger: {
-            trigger: '.contact-form-reveal',
-            start: 'top 85%',
-            once: true,
-          },
-          y: 30,
-          opacity: 0,
-          duration: 0.7,
-          ease: 'power2.out',
-        });
-
-        gsap.from('.contact-sidebar-reveal', {
-          scrollTrigger: {
-            trigger: '.contact-sidebar-reveal',
-            start: 'top 85%',
-            once: true,
-          },
-          y: 30,
-          opacity: 0,
-          duration: 0.7,
-          delay: 0.15,
-          ease: 'power2.out',
-        });
-
-        gsap.from('.contact-faq-header', {
-          scrollTrigger: {
-            trigger: '.contact-faq-header',
-            start: 'top 85%',
-            once: true,
-          },
-          y: 24,
-          opacity: 0,
-          duration: 0.6,
-          ease: 'power2.out',
-        });
-
-        gsap.utils.toArray('.contact-faq-item').forEach((el, i) => {
-          gsap.from(el, {
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 90%',
-              once: true,
-            },
-            y: 20,
-            opacity: 0,
-            duration: 0.5,
-            delay: i * 0.06,
-            ease: 'power2.out',
-          });
-        });
-
-        gsap.from('.contact-cta-reveal', {
-          scrollTrigger: {
-            trigger: '.contact-cta-reveal',
-            start: 'top 90%',
-            once: true,
-          },
-          y: 20,
-          opacity: 0,
-          duration: 0.6,
-          ease: 'power2.out',
-        });
-      });
-    };
-    init();
-
-    return () => { if (ctx) ctx.revert(); };
+  useGsap((gsap) => {
+    fadeUpOnMount(gsap, '.reveal-hero', { y: 40, duration: 0.8, stagger: 0.12, ease: 'power3.out', delay: 0.15 });
+    fadeUpOnScroll(gsap, '.contact-form-reveal', { y: 30, duration: 0.7 });
+    fadeUpOnScroll(gsap, '.contact-sidebar-reveal', { y: 30, duration: 0.7, delay: 0.15 });
+    fadeUpOnScroll(gsap, '.contact-faq-header');
+    staggerRevealOnScroll(gsap, '.contact-faq-item', { start: 'top 90%', step: 0.06, y: 20, duration: 0.5 });
+    fadeUpOnScroll(gsap, '.contact-cta-reveal', { start: 'top 90%', y: 20 });
   }, []);
 
   return (
-    <>
-      <Navbar />
+    <PageShell>
       <div className="bg-background text-on-surface">
-        {/* Hero */}
-        <section className="bg-[#0D0D0D] pt-32 pb-16 px-margin-page">
-          <div className="max-w-container-max mx-auto">
-            <p className="contact-hero-reveal font-mono text-sm text-[#1DB954] mb-4 tracking-widest">
-              {'// CONTACT'}
-            </p>
-            <h1 className="contact-hero-reveal font-display font-extrabold text-[48px] text-white mb-3">
-              Start Your Print
-            </h1>
-            <p className="contact-hero-reveal font-body text-lg text-[#9E9E9E] ">
-              Send file → get quote → approve → we print. That&apos;s it.
-            </p>
-          </div>
-        </section>
+        <PageHero
+          eyebrow="// CONTACT"
+          title="Start Your Print"
+          description="Send file → get quote → approve → we print. That's it."
+        />
 
         {/* Main Content */}
-        <main className="bg-white py-section-padding-v px-margin-page">
+        <section className="bg-white py-section-padding-v px-margin-page">
           <div className="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-12 gap-12">
             {/* Form */}
             <div className="md:col-span-7 contact-form-reveal">
@@ -246,7 +157,7 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#0D0D0D] text-white font-display font-semibold py-5 rounded-lg btn-hover transition-all flex justify-center items-center gap-2"
+                  className="w-full bg-[#0D0D0D] text-white font-display font-semibold py-5 rounded-sm btn-hover transition-all flex justify-center items-center gap-2"
                 >
                   Send Order Request
                   <span className="material-symbols-outlined">trending_flat</span>
@@ -323,7 +234,7 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
-        </main>
+        </section>
 
         {/* FAQ */}
         <section className="bg-[#F5F5F5] py-section-padding-v px-margin-page">
@@ -373,7 +284,7 @@ export default function ContactPage() {
               href="https://wa.me/"
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-primary text-white px-10 py-4 font-display font-semibold rounded-lg flex items-center gap-3 btn-hover transition-all"
+              className="bg-primary text-white px-10 py-4 font-display font-semibold rounded-sm flex items-center gap-3 btn-hover transition-all"
             >
               Open WhatsApp
               <span className="material-symbols-outlined">north_east</span>
@@ -381,7 +292,6 @@ export default function ContactPage() {
           </div>
         </section>
       </div>
-      <Footer />
-    </>
+    </PageShell>
   );
 }

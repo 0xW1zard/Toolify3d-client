@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Navbar from "@/components/ui/Navbar";
-import Footer from "@/components/ui/Footer";
 import Image from "next/image";
+import PageShell from "@/components/layout/PageShell";
+import { useGsap, fadeUpOnScroll, staggerRevealOnScroll } from "@/lib/gsap";
 
 // ── BRAND STORY DATA ──
 const storyNodes = [
@@ -114,99 +114,47 @@ export default function AboutPage() {
   const storyNodeRefs = useRef([]);
   const storyDotRefs = useRef([]);
 
-  // ── STEP 2: GSAP Hero Animation ──
-  useEffect(() => {
-    let ctx;
-    const init = async () => {
-      const { gsap } = await import("gsap");
-      const { ScrollTrigger } = await import("gsap/ScrollTrigger");
-      gsap.registerPlugin(ScrollTrigger);
+  useGsap((gsap) => {
+    gsap.from(".hero-line", {
+      clipPath: "inset(0 0 100% 0)",
+      y: 40,
+      opacity: 0,
+      duration: 0.8,
+      stagger: 0.15,
+      ease: "power3.out",
+      delay: 0.2,
+    });
 
-      ctx = gsap.context(() => {
-        // Hero line reveal
-        gsap.from(".hero-line", {
-          clipPath: "inset(0 0 100% 0)",
-          y: 40,
-          opacity: 0,
-          duration: 0.8,
-          stagger: 0.15,
-          ease: "power3.out",
-          delay: 0.2,
-        });
+    storyNodeRefs.current.forEach((nodeRef, i) => {
+      if (!nodeRef) return;
 
-        // ── STEP 3: Brand Story Timeline Scroll Animations ──
-        storyNodeRefs.current.forEach((nodeRef, i) => {
-          if (!nodeRef) return;
-
-          gsap.from(nodeRef, {
-            scrollTrigger: {
-              trigger: nodeRef,
-              start: "top 80%",
-              once: true,
-            },
-            y: 20,
-            opacity: 0,
-            duration: 0.5,
-            ease: "power2.out",
-          });
-
-          // Dot pulse on enter
-          const dotRef = storyDotRefs.current[i];
-          if (dotRef) {
-            gsap.fromTo(
-              dotRef,
-              { scale: 1 },
-              {
-                scrollTrigger: {
-                  trigger: nodeRef,
-                  start: "top 80%",
-                  once: true,
-                },
-                scale: 1.4,
-                duration: 0.2,
-                yoyo: true,
-                repeat: 1,
-                ease: "power1.inOut",
-              },
-            );
-          }
-        });
-
-        gsap.utils.toArray('.reveal-text').forEach((el) => {
-          gsap.from(el, {
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 85%',
-              once: true,
-            },
-            y: 20,
-            opacity: 0,
-            duration: 0.6,
-            ease: 'power2.out',
-          });
-        });
-
-        gsap.utils.toArray('.reveal-card').forEach((el, i) => {
-          gsap.from(el, {
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 85%',
-              once: true,
-            },
-            y: 24,
-            opacity: 0,
-            duration: 0.7,
-            delay: i * 0.1,
-            ease: 'power2.out',
-          });
-        });
+      gsap.from(nodeRef, {
+        scrollTrigger: { trigger: nodeRef, start: "top 80%", once: true },
+        y: 20,
+        opacity: 0,
+        duration: 0.5,
+        ease: "power2.out",
       });
-    };
-    init();
 
-    return () => {
-      if (ctx) ctx.revert();
-    };
+      const dotRef = storyDotRefs.current[i];
+      if (dotRef) {
+        gsap.fromTo(
+          dotRef,
+          { scale: 1 },
+          {
+            scrollTrigger: { trigger: nodeRef, start: "top 80%", once: true },
+            scale: 1.4,
+            duration: 0.2,
+            yoyo: true,
+            repeat: 1,
+            ease: "power1.inOut",
+          },
+        );
+      }
+    });
+
+    fadeUpOnScroll(gsap, '.reveal-text', { y: 20 });
+    staggerRevealOnScroll(gsap, '.reveal-card', { step: 0.1, y: 24, duration: 0.7 });
   }, []);
 
   // ── STEP 6: Photo Swap IntersectionObserver ──
@@ -236,17 +184,15 @@ export default function AboutPage() {
   }, []);
 
   return (
-    <>
-      <Navbar />
-
+    <PageShell>
       {/* ═══════════════════════════════════════════
           STEP 2 — HERO
           ═══════════════════════════════════════════ */}
       <section
         id="hero"
-        className="bg-[#0D0D0D] min-h-[70vh] flex items-end pb-16 pt-20"
+        className="bg-[#0D0D0D] min-h-[70vh] flex items-end pb-16 pt-20 px-margin-page"
       >
-        <div className="container mx-auto px-4 md:px-8 w-full">
+        <div className="max-w-container-max mx-auto w-full">
           <div className="flex justify-between items-end flex-col md:flex-row gap-8">
             {/* LEFT */}
             <div>
@@ -257,7 +203,7 @@ export default function AboutPage() {
                 {"// ABOUT_US"}
               </span>
 
-              <h1 className="font-display font-extrabold text-6xl md:text-8xl text-white leading-none tracking-tight mt-4">
+              <h1 className="font-display font-extrabold text-[48px] md:text-[64px] text-white leading-none tracking-tight mt-4">
                 <div className="overflow-hidden">
                   <div className="hero-line">COMPILING</div>
                 </div>
@@ -320,11 +266,11 @@ export default function AboutPage() {
           >
             {"// OUR.STORY"}
           </span>
-          <h2 className="font-display font-bold text-3xl text-[#0D0D0D] mt-2">
+          <h2 className="font-display font-bold text-[32px] text-[#0D0D0D] mt-2">
             How It Started
           </h2>
         </div>
-        <div className="container mx-auto px-4 md:px-8 flex gap-10 justify-between items-center">
+        <div className="max-w-container-max mx-auto px-margin-page flex gap-10 justify-between items-center">
           <div className="w-3/5 mx-auto px-4 md:px-8">
             {/* Timeline */}
             <div className="relative">
@@ -457,8 +403,8 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════
           STEPS 4, 5, 6 — FOUNDER SECTION
           ═══════════════════════════════════════════ */}
-      <section id="founder" className="bg-[#F5F5F5] py-20">
-        <div className="max-w-[1100px] mx-auto px-4 md:px-8">
+      <section id="founder" className="bg-[#F5F5F5] py-20 px-margin-page">
+        <div className="max-w-container-max mx-auto">
           {/* Section Header */}
           <div className="text-center mb-14">
             <span
@@ -467,7 +413,7 @@ export default function AboutPage() {
             >
               {"// FOUNDER"}
             </span>
-            <h2 className="font-display font-bold text-3xl text-[#0D0D0D] mt-2">
+            <h2 className="font-display font-bold text-[32px] text-[#0D0D0D] mt-2">
               THE PERSON BEHIND THE PRINTS
             </h2>
           </div>
@@ -607,8 +553,8 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════
           STEP 7 — STATS
           ═══════════════════════════════════════════ */}
-      <section id="stats" className="bg-[#0D0D0D] py-16">
-        <div className="max-w-[900px] mx-auto px-4 md:px-8">
+      <section id="stats" className="bg-[#0D0D0D] py-16 px-margin-page">
+        <div className="max-w-container-max mx-auto">
           <div className="text-center">
             <span
               className="font-mono text-xs text-[#1DB954] uppercase"
@@ -692,8 +638,8 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════
           STEP 7 — CTA
           ═══════════════════════════════════════════ */}
-      <section id="cta" className="bg-[#0D0D0D] py-16">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8">
+      <section id="cta" className="bg-[#0D0D0D] py-16 px-margin-page">
+        <div className="max-w-container-max mx-auto">
           <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[#2A2A2A]">
             {/* LEFT */}
             <div className="text-center py-10 md:flex-1">
@@ -737,8 +683,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      <Footer />
-    </>
+    </PageShell>
   );
 }

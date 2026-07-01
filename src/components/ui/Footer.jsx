@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
 import { RiFacebookLine } from "react-icons/ri";
 import { PiYoutubeLogoLight } from "react-icons/pi";
+import { useGsap, fadeUpOnScroll } from '@/lib/gsap';
 
 
 
@@ -25,53 +26,27 @@ const protocolLinks = [
 export default function Footer() {
   const footerRef = useRef(null);
 
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  useGsap(
+    (gsap) => {
+      gsap.from('.footer-col', {
+        scrollTrigger: { trigger: footerRef.current, start: 'top 90%', once: true },
+        y: 24,
+        opacity: 0,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power2.out',
+      });
 
-    let ctx;
-    const init = async () => {
-      const { gsap } = await import('gsap');
-      const { ScrollTrigger } = await import('gsap/ScrollTrigger');
-      gsap.registerPlugin(ScrollTrigger);
-
-      ctx = gsap.context(() => {
-        // Stagger the 4 columns
-        gsap.from('.footer-col', {
-          scrollTrigger: {
-            trigger: footerRef.current,
-            start: 'top 90%',
-            once: true,
-          },
-          y: 24,
-          opacity: 0,
-          duration: 0.6,
-          stagger: 0.1,
-          ease: 'power2.out',
-        });
-
-        // Bottom bar slide in
-        gsap.from('.footer-bottom', {
-          scrollTrigger: {
-            trigger: '.footer-bottom',
-            start: 'top 95%',
-            once: true,
-          },
-          y: 12,
-          opacity: 0,
-          duration: 0.5,
-          ease: 'power2.out',
-        });
-      }, footerRef.current);
-    };
-    init();
-
-    return () => { if (ctx) ctx.revert(); };
-  }, []);
+      fadeUpOnScroll(gsap, '.footer-bottom', { start: 'top 95%', y: 12, duration: 0.5 });
+    },
+    [],
+    { scopeRef: footerRef }
+  );
 
   return (
     <footer ref={footerRef} className="bg-[#001c08] border-t border-[#2A2A2A]">
       {/* Main Grid */}
-      <div className="container mx-auto px-4 md:px-8 py-12 md:py-16">
+      <div className="max-w-container-max mx-auto px-margin-page py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
 
           {/* COL 1 — Brand */}
@@ -174,7 +149,7 @@ export default function Footer() {
 
       {/* Bottom Bar */}
       <div className="footer-bottom border-t border-[#2A2A2A]">
-        <div className="max-w-[1200px] mx-auto px-4 md:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-2">
+        <div className="max-w-container-max mx-auto px-margin-page py-4 flex flex-col md:flex-row justify-between items-center gap-2">
           <p className="font-mono text-[11px] text-[#9E9E9E] uppercase tracking-wider">
             © 2024 TOOLIFY 3D // 3D_UNIT_01
           </p>

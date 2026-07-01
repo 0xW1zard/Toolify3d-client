@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
-import Navbar from '@/components/ui/Navbar';
-import Footer from '@/components/ui/Footer';
+import PageShell from '@/components/layout/PageShell';
+import { useGsap, fadeUpOnMount, fadeUpOnScroll, revealFromHidden } from '@/lib/gsap';
 
 const FILE_FORMATS = [
   { ext: '.STL', label: '[STEREOLITHOGRAPHY]' },
@@ -94,71 +93,29 @@ const FORMAT_SIDEBAR = [
 ];
 
 export default function ServicesPage() {
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  useGsap((gsap) => {
+    fadeUpOnMount(gsap, '#hero-title span', { y: 50, duration: 0.8, ease: 'power3.out' });
 
-    let ctx;
-    const init = async () => {
-      const { gsap } = await import('gsap');
-      const { ScrollTrigger } = await import('gsap/ScrollTrigger');
-      gsap.registerPlugin(ScrollTrigger);
-
-      ctx = gsap.context(() => {
-        gsap.from('#hero-title span', {
-          y: 50,
-          opacity: 0,
-          duration: 0.8,
-          stagger: 0.1,
-          ease: 'power3.out',
-        });
-
-        gsap.utils.toArray('.bento-cell').forEach((cell, index) => {
-          gsap.to(cell, {
-            scrollTrigger: {
-              trigger: cell,
-              start: 'top 85%',
-              toggleActions: 'play none none none',
-            },
-            y: 0,
-            opacity: 1,
-            duration: 0.8,
-            ease: 'power2.out',
-            delay: (index % 3) * 0.1,
-          });
-        });
-
-        gsap.utils.toArray('.reveal-up').forEach((el) => {
-          gsap.from(el, {
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 85%',
-              toggleActions: 'play none none none',
-            },
-            y: 24,
-            opacity: 0,
-            duration: 0.7,
-            ease: 'power2.out',
-          });
-        });
+    gsap.utils.toArray('.bento-cell').forEach((cell, index) => {
+      revealFromHidden(gsap, cell, {
+        scrollTrigger: { trigger: cell, start: 'top 85%', once: true },
+        delay: (index % 3) * 0.1,
       });
-    };
-    init();
+    });
 
-    return () => { if (ctx) ctx.revert(); };
+    fadeUpOnScroll(gsap, '.reveal-up', { y: 24, duration: 0.7 });
   }, []);
 
   return (
-    <>
-      <Navbar />
-      <main className="bg-white text-on-background font-body overflow-x-hidden selection:bg-primary-container selection:text-white">
+    <PageShell mainClassName="bg-white text-on-background font-body overflow-x-hidden selection:bg-primary-container selection:text-white">
         {/* HERO */}
         <header className="bg-[#0D0D0D] min-h-[614px] flex items-end pb-16 relative overflow-hidden">
-          <div className="max-w-container-max mx-auto px-gutter w-full relative z-10 flex flex-col md:flex-row justify-between items-end gap-stack-lg">
+          <div className="max-w-container-max mx-auto px-margin-page w-full relative z-10 flex flex-col md:flex-row justify-between items-end gap-stack-lg">
             <div className="max-w-2xl">
               <span className="font-mono text-xs text-[#1DB954] uppercase tracking-[0.15em] font-medium leading-none mb-2 block">
                 {'// SERVICES'}
               </span>
-              <h1 className="font-display font-extrabold text-[64px] md:text-[84px] text-white leading-none" id="hero-title">
+              <h1 className="font-display font-extrabold text-[48px] md:text-[64px] text-white leading-none" id="hero-title">
                 <span className="inline-block">WHAT</span>{' '}
                 <span className="inline-block">WE</span>{' '}
                 <span className="inline-block text-[#1DB954]">PRINT.</span>
@@ -176,7 +133,7 @@ export default function ServicesPage() {
 
         {/* BENTO SERVICES GRID */}
         <section className="py-section-padding-v bg-white">
-          <div className="max-w-container-max mx-auto px-gutter">
+          <div className="max-w-container-max mx-auto px-margin-page">
             <span className="font-mono text-xs text-[#1DB954] uppercase tracking-[0.15em] font-medium leading-none mb-8 block">
               {'// WHAT_WE_OFFER'}
             </span>
@@ -380,7 +337,7 @@ export default function ServicesPage() {
 
         {/* TECH SPECS */}
         <section className="py-section-padding-v bg-white">
-          <div className="max-w-container-max mx-auto px-gutter">
+          <div className="max-w-container-max mx-auto px-margin-page">
             <div className="grid grid-cols-12 gap-4">
               {PRINTERS.map((printer) => (
                 <div
@@ -425,7 +382,7 @@ export default function ServicesPage() {
 
         {/* CTA */}
         <section className="py-section-padding-v bg-[#0D0D0D]">
-          <div className="max-w-container-max mx-auto px-gutter">
+          <div className="max-w-container-max mx-auto px-margin-page">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bento-cell bg-[#f4fcef] p-12 flex flex-col justify-between min-h-[300px]">
                 <div>
@@ -458,8 +415,6 @@ export default function ServicesPage() {
             </div>
           </div>
         </section>
-      </main>
-      <Footer />
-    </>
+    </PageShell>
   );
 }
