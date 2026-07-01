@@ -49,7 +49,7 @@ export default function Home() {
           gsap.from(el, {
             scrollTrigger: {
               trigger: el,
-              start: 'top 85%',
+              start: 'top 65%',
               once: true,
             },
             y: 24,
@@ -86,14 +86,14 @@ export default function Home() {
             HERO
             ═══════════════════════════════════════════ */}
         <section className="min-h-[calc(100vh-200px)] bg-[#0D0D0D] flex flex-col md:flex-row items-center px-4 md:px-8 pt-16">
-          <div className="w-full md:w-3/5 py-24 md:py-32 z-10 max-w-[1200px] mx-auto">
+          <div className="w-full md:w-3/5 py-24 md:py-32 z-10 mx-auto">
             <span className="hero-fade font-mono text-xs text-[#1DB954] uppercase tracking-[0.15em] block mb-4">
-              // INITIALIZING_MANIFEST
+              {'// INITIALIZING_MANIFEST'}
             </span>
             <h1 className="hero-fade font-display font-extrabold text-[40px] md:text-[64px] text-white leading-[1.1] tracking-tight mb-6">
               YOUR<br />IMAGINATION<br /><span className="text-[#1DB954]">PRINTED</span>
             </h1>
-            <p className="hero-fade font-body text-lg text-white/70 max-w-md mb-10">
+            <p className="hero-fade font-body text-lg text-white/70 mb-10">
               High-precision additive manufacturing for engineers, artists, and creators.
             </p>
             <div className="hero-fade flex gap-4">
@@ -105,7 +105,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="w-full md:w-2/5 flex justify-center items-center py-16 overflow-hidden">
+          <div className="w-full md:w-2/5 flex justify-center items-center py-16">
             <div className="cube-wireframe">
               <div className="cube-inner">
                 <div className="cube-face face-front"></div>

@@ -25,6 +25,48 @@
   --radius-sm: 2px;
   --radius-DEFAULT: 2px;
   --radius-md: 4px;
+
+  /* ── Pricing page tokens ── */
+  --color-primary: #006e2d;
+  --color-primary-container: #1db954;
+  --color-on-surface: #1a1c1c;
+  --color-secondary: #5f5e5e;
+  --color-surface-container-low: #f3f3f3;
+  --color-surface-container-lowest: #ffffff;
+  --color-outline-variant: #bccbb9;
+  --color-surface-container-highest: #e2e2e2;
+  --color-on-tertiary-fixed: #002108;
+  --color-primary-fixed: #72fe8f;
+  --color-secondary-fixed-dim: #74dc85;
+  --color-on-tertiary-fixed-variant: #005320;
+  --color-surface-bright: #f9f9f9;
+  --color-outline: #6d7b6c;
+  --color-background: #f9f9f9;
+
+  --spacing-gutter: 24px;
+  --spacing-xl: 80px;
+  --spacing-lg: 48px;
+  --spacing-md: 24px;
+  --spacing-sm: 16px;
+  --spacing-xs: 8px;
+  --spacing-base: 4px;
+
+  /* ── Services page tokens ── */
+  --color-on-background: #161d16;
+  --color-surface: #f4fcef;
+  --color-surface-container: #e8f0e4;
+  --color-surface-variant: #dde5d9;
+  --color-inverse-surface: #2b322a;
+  --color-tertiary-fixed-dim: #74dc85;
+  --color-tertiary-fixed: #90f99f;
+  --color-on-surface-variant: #3d4a3d;
+
+  --spacing-section-padding-v: 6rem;
+  --spacing-stack-lg: 2rem;
+  --spacing-stack-md: 1rem;
+  --spacing-stack-sm: 0.5rem;
+  --spacing-margin-page: 2rem;
+  --max-width-container-max: 1400px;
 }
 
 /* ── Base ── */
@@ -126,6 +168,57 @@ section {
   background-size: 20px 20px;
 }
 
+/* Pricing page — upload drop zone */
+.upload-dashed {
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%232A2A2A' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+}
+
+.upload-dashed:hover {
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%231DB954' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+}
+
+/* Services page — bento grid cells */
+.bento-cell {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #1DB954;
+}
+
+/* Contact page */
+.btn-hover:hover {
+  background-color: #1DB954 !important;
+  color: #0D0D0D !important;
+}
+
+.technical-border {
+  border: 1px solid #E5E5E5;
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.accordion-item.active .accordion-content {
+  max-height: 200px;
+}
+
+.accordion-item.active .accordion-icon {
+  transform: rotate(45deg);
+}
+
 /* ═══════════════════════════════════════════
    RANGE INPUT STYLING
    ═══════════════════════════════════════════ */
@@ -167,5 +260,10 @@ input[type="range"]::-moz-range-thumb {
   .marquee-content,
   .cube-inner {
     animation: none !important;
+  }
+
+  .bento-cell {
+    opacity: 1;
+    transform: none;
   }
 }
