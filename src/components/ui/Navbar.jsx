@@ -1,9 +1,12 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useGsap } from '@/lib/gsap';
+import useGetSession from '@/lib/api/session';
+import { LuCircleUser } from "react-icons/lu";
+
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -17,6 +20,13 @@ const navLinks = [
 export default function Navbar() {
   const pathname = usePathname();
   const navRef = useRef(null);
+  
+  // Mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Session handling
+  const { session, isPending } = useGetSession();
+  const name = session?.user?.name || 'User';
 
   useGsap(
     (gsap) => {
@@ -45,6 +55,30 @@ export default function Navbar() {
     },
     [],
     { scopeRef: navRef, scrollTrigger: false }
+  );
+
+  // Reusable Cart Icon to keep the JSX clean
+  const CartIcon = () => (
+    <>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+      </svg>
+      {/* Cart badge */}
+      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand text-white text-[9px] font-mono font-bold rounded-full flex items-center justify-center">
+        0
+      </span>
+    </>
   );
 
   return (
@@ -76,7 +110,7 @@ export default function Navbar() {
                 }`}
               >
                 {link.label}
-                {/* Active underline — sits below the border */}
+                {/* Active underline */}
                 {isActive && (
                   <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-brand rounded-full"></span>
                 )}
@@ -87,61 +121,120 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="nav-actions flex items-center gap-3">
-          {/* Login */}
-          <Link
-            href="/login"
-            className="hidden md:inline-flex font-body text-sm font-medium text-dark border border-border px-5 py-2 rounded-sm hover:border-muted hover:bg-alt-bg transition-all duration-200"
-          >
-            Login
-          </Link>
+          {session ? (
+            // --- LOGGED IN STATE ---
+            <>
+            <Link
+                href="/dashboard"
+                className="relative w-9 h-9 flex items-center justify-center text-gray-600 hover:text-brand transition-colors duration-200"
+                aria-label="Dashboard"
+              >
+                <CartIcon />
+              </Link>
+              <div className="hidden md:block w-px h-6 bg-border mx-1"></div>
+              <span className="hidden md:flex font-body text-sm font-medium text-gray-600 mr-2  items-center gap-2">
+              <span><LuCircleUser className="w-5 h-5 text-gray-600" /></span>
+                Hi, {name.split(' ')[0]}
+              </span>
+              {/* Cart Icon now links to /dashboard */}
+              
+            </>
+          ) : (
+            // --- LOGGED OUT STATE ---
+            <>
+              <Link
+                href="/login"
+                className="hidden md:inline-flex font-body text-sm font-medium text-dark border border-border px-5 py-2 rounded-sm hover:border-muted hover:bg-alt-bg transition-all duration-200"
+              >
+                Login
+              </Link>
+              <Link
+                href="/contact"
+                className="hidden md:inline-flex font-body text-sm font-semibold text-white bg-dark px-5 py-2 rounded-sm hover:bg-brand transition-colors duration-200"
+              >
+                Get Started
+              </Link>
+              <div className="hidden md:block w-px h-6 bg-border mx-1"></div>
+              {/* Standard Cart Button */}
+              <button
+                className="relative w-9 h-9 flex items-center justify-center text-muted hover:text-brand transition-colors duration-200"
+                aria-label="Shopping Cart"
+              >
+                <CartIcon />
+              </button>
+            </>
+          )}
 
-          {/* Get Started */}
-          <Link
-            href="/contact"
-            className="hidden md:inline-flex font-body text-sm font-semibold text-white bg-dark px-5 py-2 rounded-sm hover:bg-brand transition-colors duration-200"
-          >
-            Get Started
-          </Link>
-
-          {/* Divider */}
-          <div className="hidden md:block w-px h-6 bg-border mx-1"></div>
-
-          {/* Shopping Cart */}
+          {/* Mobile Hamburger Menu */}
           <button
-            className="relative w-9 h-9 flex items-center justify-center text-muted hover:text-brand transition-colors duration-200"
-            aria-label="Shopping Cart"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden flex flex-col justify-center gap-[5px] w-8 h-8 ml-1 z-50"
+            aria-label="Toggle menu"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
-            {/* Cart badge */}
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand text-white text-[9px] font-mono font-bold rounded-full flex items-center justify-center">
-              0
-            </span>
-          </button>
-
-          {/* Mobile Hamburger */}
-          <button
-            className="md:hidden flex flex-col justify-center gap-[5px] w-8 h-8 ml-1"
-            aria-label="Open menu"
-          >
-            <span className="block w-6 h-[2px] bg-dark"></span>
-            <span className="block w-6 h-[2px] bg-dark"></span>
-            <span className="block w-4 h-[2px] bg-dark"></span>
+            <span
+              className={`block w-6 h-[2px] bg-dark transition-transform duration-300 ${
+                isMobileMenuOpen ? 'rotate-45 translate-y-[7px]' : ''
+              }`}
+            ></span>
+            <span
+              className={`block w-6 h-[2px] bg-dark transition-opacity duration-300 ${
+                isMobileMenuOpen ? 'opacity-0' : ''
+              }`}
+            ></span>
+            <span
+              className={`block w-6 h-[2px] bg-dark transition-transform duration-300 ${
+                isMobileMenuOpen ? '-rotate-45 -translate-y-[7px]' : ''
+              }`}
+            ></span>
           </button>
         </div>
       </div>
+
+      {/* Mobile Menu Dropdown */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-border shadow-lg py-4 px-6 flex flex-col gap-4 z-40">
+          {session && (
+            <div className="text-sm font-medium text-dark pb-2 border-b border-border flex items-center gap-1.5">
+              <span><LuCircleUser className="w-5 h-5 text-gray-600" /></span>
+              Hi, {name.split(' ')[0]}
+            </div>
+          )}
+          
+          <nav className="flex flex-wrap gap-3.5 justify-center">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`font-body text-sm px-4 border border-border rounded-sm py-1.5 hover:bg-alt-bg transition-colors duration-200 ${
+                  pathname === link.href ? 'text-brand font-semibold' : 'text-muted'
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          {!session && (
+            <div className="flex flex-col gap-3 pt-4 border-t border-border">
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-center font-body text-sm font-medium text-dark border border-border px-5 py-2 rounded-sm"
+              >
+                Login
+              </Link>
+              <Link
+                href="/contact"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-center font-body text-sm font-semibold text-white bg-dark px-5 py-2 rounded-sm"
+              >
+                Get Started
+              </Link>
+            </div>
+          )}
+        </div>
+      )}
     </header>
   );
 }

@@ -103,10 +103,10 @@ const printers = [
 ];
 
 const founderImages =[
-  { id: 1, image: "https://i.pravatar.cc/100", alt: "Founder 1" },
-  { id: 2, image: "https://i.pravatar.cc/200", alt: "Founder 2" },
-  { id: 3, image: "https://i.pravatar.cc/300", alt: "Founder 3" },
-  { id: 4, image: "https://i.pravatar.cc/400", alt: "Founder 4" },
+  { id: 1, image: "https://images.unsplash.com/photo-1618088129969-bcb0c051985e?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Founder 1" },
+  { id: 2, image: "https://images.unsplash.com/photo-1756699272353-8e57fb998f3b?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Founder 2" },
+  { id: 3, image: "https://images.unsplash.com/photo-1756699276817-584aa723cbc4?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Founder 3" },
+  { id: 4, image: "https://images.unsplash.com/photo-1659128103048-e41477d734a5?q=80&w=697&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Founder 4" },
 ];
 
 export default function AboutPage() {
@@ -392,7 +392,7 @@ export default function AboutPage() {
             <Image
               src="https://images.unsplash.com/photo-1603974739172-4ad6a3117e40?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
               alt="Story Timeline"
-              width={500}
+              width={500} loading="eager"
               height={500}
               className="w-full h-auto rounded-sm"
             />
@@ -436,12 +436,13 @@ export default function AboutPage() {
                     >
                       <span className="font-mono text-[10px] text-[#9E9E9E]">{`// FOUNDER_PHOTO_${image.id}`}</span>
                       <Image
-                        src={image.image}
-                        alt={image.alt}
-                        width={300}
-                        height={300}
-                        className="w-full h-full object-contain"
-                      />
+  src={image.image}
+  alt={image.alt}
+  fill
+  priority
+  className="object-cover object-top"
+  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
+/>
                     </div>
                   ))}
 

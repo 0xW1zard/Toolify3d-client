@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 export default function HeroSection() {
   return (
     <section className="bg-dark px-margin-page pt-16">
-      <Container className="min-h-[calc(100vh-200px)] flex flex-col md:flex-row items-center">
+      <Container className="min-h-[calc(100vh-250px)] flex flex-col md:flex-row items-center">
         <div className="w-full md:w-3/5 py-24 md:py-32 z-10">
           <Eyebrow className="reveal-hero block mb-4">
             {'// INITIALIZING_MANIFEST'}
