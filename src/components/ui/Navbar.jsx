@@ -2,11 +2,11 @@
 
 import { useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useGsap } from '@/lib/gsap';
 import useGetSession from '@/lib/api/session';
-import { LuCircleUser } from "react-icons/lu";
-
+import { LuCircleUser } from 'react-icons/lu';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -16,6 +16,81 @@ const navLinks = [
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
+
+function UserAvatar({ name, image, size = 32 }) {
+  const initials = name
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
+  if (image) {
+    return (
+      <Image
+        src={image}
+        alt={name}
+        width={size}
+        height={size}
+        className="rounded-sm object-cover border border-border shrink-0"
+      />
+    );
+  }
+
+  return (
+    <span
+      className="rounded-sm border border-border bg-alt-bg shrink-0 flex items-center justify-center text-muted"
+      style={{ width: size, height: size }}
+    >
+      {initials ? (
+        <span className="font-mono text-[10px] font-bold">{initials}</span>
+      ) : (
+        <LuCircleUser className="w-4 h-4" />
+      )}
+    </span>
+  );
+}
+
+function UserNavChip({ name, image, className = '' }) {
+  const firstName = name.split(' ')[0];
+
+  return (
+    <Link
+      href="/dashboard"
+      className={`flex items-center gap-2 min-w-0 hover:opacity-80 transition-opacity duration-200 ${className}`}
+      aria-label="Go to dashboard"
+    >
+      <UserAvatar name={name} image={image} />
+      <span className="font-body text-sm font-medium text-dark truncate">
+        Hi, {firstName}
+      </span>
+    </Link>
+  );
+}
+
+function CartIcon() {
+  return (
+    <>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <circle cx="9" cy="21" r="1" />
+        <circle cx="20" cy="21" r="1" />
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+      </svg>
+      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand text-white text-[9px] font-mono font-bold rounded-full flex items-center justify-center">
+        0
+      </span>
+    </>
+  );
+}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -27,6 +102,7 @@ export default function Navbar() {
   // Session handling
   const { session, isPending } = useGetSession();
   const name = session?.user?.name || 'User';
+  const userImage = session?.user?.image || null;
 
   useGsap(
     (gsap) => {
@@ -55,30 +131,6 @@ export default function Navbar() {
     },
     [],
     { scopeRef: navRef, scrollTrigger: false }
-  );
-
-  // Reusable Cart Icon to keep the JSX clean
-  const CartIcon = () => (
-    <>
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="9" cy="21" r="1" />
-        <circle cx="20" cy="21" r="1" />
-        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-      </svg>
-      {/* Cart badge */}
-      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand text-white text-[9px] font-mono font-bold rounded-full flex items-center justify-center">
-        0
-      </span>
-    </>
   );
 
   return (
@@ -121,26 +173,32 @@ export default function Navbar() {
 
         {/* Right Actions */}
         <div className="nav-actions flex items-center gap-3">
-          {session ? (
-            // --- LOGGED IN STATE ---
+          {isPending ? (
+            <div className="hidden md:block w-24 h-9" aria-hidden="true" />
+          ) : session ? (
             <>
-            <Link
+              <UserNavChip
+                name={name}
+                image={userImage}
+                className="hidden md:flex max-w-[160px]"
+              />
+              <Link
+                href="/dashboard"
+                className="md:hidden flex items-center"
+                aria-label="Go to dashboard"
+              >
+                <UserAvatar name={name} image={userImage} size={28} />
+              </Link>
+              <div className="hidden md:block w-px h-6 bg-border mx-1" />
+              <Link
                 href="/dashboard"
                 className="relative w-9 h-9 flex items-center justify-center text-gray-600 hover:text-brand transition-colors duration-200"
-                aria-label="Dashboard"
+                aria-label="Shopping cart"
               >
                 <CartIcon />
               </Link>
-              <div className="hidden md:block w-px h-6 bg-border mx-1"></div>
-              <span className="hidden md:flex font-body text-sm font-medium text-gray-600 mr-2  items-center gap-2">
-              <span><LuCircleUser className="w-5 h-5 text-gray-600" /></span>
-                Hi, {name.split(' ')[0]}
-              </span>
-              {/* Cart Icon now links to /dashboard */}
-              
             </>
           ) : (
-            // --- LOGGED OUT STATE ---
             <>
               <Link
                 href="/login"
@@ -154,9 +212,9 @@ export default function Navbar() {
               >
                 Get Started
               </Link>
-              <div className="hidden md:block w-px h-6 bg-border mx-1"></div>
-              {/* Standard Cart Button */}
+              <div className="hidden md:block w-px h-6 bg-border mx-1" />
               <button
+                type="button"
                 className="relative w-9 h-9 flex items-center justify-center text-muted hover:text-brand transition-colors duration-200"
                 aria-label="Shopping Cart"
               >
@@ -194,10 +252,14 @@ export default function Navbar() {
       {isMobileMenuOpen && (
         <div className="md:hidden absolute top-16 left-0 w-full bg-white border-b border-border shadow-lg py-4 px-6 flex flex-col gap-4 z-40">
           {session && (
-            <div className="text-sm font-medium text-dark pb-2 border-b border-border flex items-center gap-1.5">
-              <span><LuCircleUser className="w-5 h-5 text-gray-600" /></span>
+            <Link
+              href="/dashboard"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-sm font-medium text-dark pb-2 border-b border-border flex items-center gap-2"
+            >
+              <UserAvatar name={name} image={userImage} size={28} />
               Hi, {name.split(' ')[0]}
-            </div>
+            </Link>
           )}
           
           <nav className="flex flex-wrap gap-3.5 justify-center">
