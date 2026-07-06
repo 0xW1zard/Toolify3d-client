@@ -320,6 +320,24 @@ input[type="range"]::-moz-range-thumb {
   transform: translateY(20px);
 }
 
+.product-drawer-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.product-drawer-body::-webkit-scrollbar-track {
+  background: var(--color-surface-container-lowest);
+  border-left: 1px solid var(--color-outline-variant);
+}
+
+.product-drawer-body::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 4px;
+}
+
+.product-drawer-body::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee-content,
   .cube-inner {

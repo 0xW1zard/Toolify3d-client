@@ -3,14 +3,14 @@
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import PageShell from '@/components/layout/PageShell';
+import ProductCard from '@/components/products/ProductCard';
+import ProductDrawer from '@/components/products/ProductDrawer';
 import {
   useGsap,
   loadGsap,
   prefersReducedMotion,
   fadeUpOnScroll,
   fadeFromHidden,
-  fadeInPanel,
-  fadeOut,
 } from '@/lib/gsap';
 
 const CATEGORIES = ['ALL', 'HOBBY', 'FUNCTIONAL', 'CUSTOM', 'COSPLAY', 'MINIATURES'];
@@ -96,86 +96,8 @@ const STAT_BOXES = [
   { label: 'LEAD TIME', value: '1–4 DAYS' },
 ];
 
-function CategoryBadge({ category }) {
-  const isFunctional = category === 'FUNCTIONAL';
-  return (
-    <span
-      className={`px-2 py-0.5 font-mono text-[10px] uppercase font-bold ${
-        isFunctional
-          ? 'bg-primary-container text-[#0D0D0D]'
-          : 'bg-[#333] text-white'
-      }`}
-    >
-      {category}
-    </span>
-  );
-}
-
-function ProductCard({ product, viewMode, onOpen }) {
-  return (
-    <div
-      className={`product-card card-dark group flex flex-col h-full cursor-pointer ${
-        viewMode === 'list' ? 'flex-row' : ''
-      }`}
-      onClick={() => onOpen(product)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onOpen(product);
-        }
-      }}
-    >
-      <div
-        className={`relative bg-[#0a0a0a] overflow-hidden shrink-0 ${
-          viewMode === 'list' ? 'w-40 aspect-square' : 'aspect-square'
-        }`}
-      >
-        <div
-          className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-          style={{ backgroundImage: `url('${product.image}')` }}
-        />
-        <div className="absolute top-2 left-2 flex flex-col gap-1">
-          <span className="bg-[#0D0D0D] text-white border border-[#333] px-2 py-0.5 font-mono text-[10px] uppercase">
-            {product.material}
-          </span>
-        </div>
-        <div className="absolute top-2 right-2">
-          <CategoryBadge category={product.category} />
-        </div>
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <span className="bg-transparent border border-primary-container text-primary-container px-4 py-2 font-mono text-sm uppercase hover:bg-primary-container hover:text-[#0D0D0D] transition-colors">
-            {'// VIEW'}
-          </span>
-        </div>
-      </div>
-      <div className={`p-4 flex flex-col flex-grow ${viewMode === 'list' ? 'justify-center' : ''}`}>
-        <h4 className="font-display text-[18px] font-bold mb-1 truncate text-white">
-          {product.name}
-        </h4>
-        <div className="font-mono text-xl text-primary-container mb-3">
-          ${product.price.toFixed(2)}
-        </div>
-        <div className="font-mono text-[12px] text-[#888] mb-4 flex-grow">{product.specs}</div>
-        <button
-          type="button"
-          className="w-full btn-primary text-sm py-2 mt-auto"
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpen(product);
-          }}
-        >
-          ORDER THIS
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function ProductsPage() {
   const pageRef = useRef(null);
-  const modalPanelRef = useRef(null);
   const gridRef = useRef(null);
 
   const [category, setCategory] = useState('ALL');
@@ -183,7 +105,7 @@ export default function ProductsPage() {
   const [sort, setSort] = useState('featured');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const filteredProducts = useMemo(() => {
     let result = PRODUCTS.filter((p) => {
@@ -216,50 +138,15 @@ export default function ProductsPage() {
     );
   };
 
-  const openModal = useCallback((product) => {
+  const openDrawer = useCallback((product) => {
     setSelectedProduct(product);
-    setModalOpen(true);
+    setDrawerOpen(true);
   }, []);
 
-  const closeModal = useCallback(() => {
-    const reset = () => {
-      setModalOpen(false);
-      setSelectedProduct(null);
-    };
-
-    if (prefersReducedMotion() || !modalPanelRef.current) {
-      reset();
-      return;
-    }
-
-    const run = async () => {
-      const { gsap } = await loadGsap();
-      if (!modalPanelRef.current) {
-        reset();
-        return;
-      }
-      fadeOut(gsap, modalPanelRef.current, reset);
-    };
-    run();
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    setSelectedProduct(null);
   }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = modalOpen ? 'hidden' : '';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [modalOpen]);
-
-  useEffect(() => {
-    if (!modalOpen || !selectedProduct) return;
-    if (prefersReducedMotion()) return;
-
-    const run = async () => {
-      const { gsap } = await loadGsap();
-      if (modalPanelRef.current) fadeInPanel(gsap, modalPanelRef.current);
-    };
-    run();
-  }, [modalOpen, selectedProduct]);
 
   useGsap((gsap) => {
     gsap.from('.products-hero-label', { y: 20, opacity: 0, duration: 0.6, ease: 'power2.out', delay: 0.1 });
@@ -431,7 +318,7 @@ export default function ProductsPage() {
                   key={product.id}
                   product={product}
                   viewMode={viewMode}
-                  onOpen={openModal}
+                  onOpen={openDrawer}
                 />
               ))}
             </div>
@@ -484,110 +371,8 @@ export default function ProductsPage() {
         </section>
       </div>
 
-      {/* Quick View Modal */}
-      {modalOpen && selectedProduct && (
-        <div className="fixed inset-0 z-[100]">
-          <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={closeModal}
-            aria-hidden="true"
-          />
-          <div
-            ref={modalPanelRef}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white border border-outline-variant shadow-2xl p-0 flex flex-col md:flex-row overflow-hidden max-h-[90vh]"
-          >
-            <button
-              type="button"
-              className="absolute top-4 right-4 z-10 text-secondary hover:text-on-background bg-surface-container-highest p-1 rounded-sm"
-              onClick={closeModal}
-              aria-label="Close"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-
-            <div className="w-full md:w-1/2 bg-[#0a0a0a] relative min-h-[300px]">
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url('${selectedProduct.modalImage}')` }}
-              />
-            </div>
-
-            <div className="w-full md:w-1/2 p-8 flex flex-col overflow-y-auto">
-              <span className="font-mono text-sm text-primary-container block mb-1 uppercase">
-                {'// '}{selectedProduct.category}
-              </span>
-              <h2 className="font-display font-bold text-[32px] text-on-background mb-2">
-                {selectedProduct.name}
-              </h2>
-              <div className="font-mono text-[32px] text-primary mb-6">
-                ${selectedProduct.price.toFixed(2)}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-8 border-t border-b border-outline-variant py-4">
-                <div>
-                  <span className="font-mono text-[11px] text-secondary block uppercase mb-1">
-                    Material
-                  </span>
-                  <span className="font-body text-on-background font-semibold">
-                    {selectedProduct.material}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-mono text-[11px] text-secondary block uppercase mb-1">
-                    Weight
-                  </span>
-                  <span className="font-body text-on-background font-semibold">
-                    {selectedProduct.weight}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-mono text-[11px] text-secondary block uppercase mb-1">
-                    Layer Height
-                  </span>
-                  <span className="font-body text-on-background font-semibold">
-                    {selectedProduct.layerHeight}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-mono text-[11px] text-secondary block uppercase mb-1">
-                    Print Time
-                  </span>
-                  <span className="font-body text-on-background font-semibold">
-                    {selectedProduct.printTime}
-                  </span>
-                </div>
-                <div className="col-span-2">
-                  <span className="font-mono text-[11px] text-secondary block uppercase mb-1">
-                    Available Colors
-                  </span>
-                  <div className="flex gap-2 mt-1">
-                    {selectedProduct.colors.map((color) => (
-                      <div
-                        key={color}
-                        className="w-5 h-5 border border-outline"
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-auto flex flex-col gap-3">
-                <Link href="/contact" className="btn-primary w-full text-lg py-4 text-center">
-                  ORDER THIS PRINT
-                </Link>
-                <a
-                  href="https://wa.me/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-surface border border-outline-variant text-on-background font-mono text-sm py-3 w-full transition-colors hover:bg-surface-variant flex items-center justify-center gap-2 uppercase"
-                >
-                  ASK ON WHATSAPP
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
+      {drawerOpen && selectedProduct && (
+        <ProductDrawer product={selectedProduct} onClose={closeDrawer} />
       )}
     </PageShell>
   );
