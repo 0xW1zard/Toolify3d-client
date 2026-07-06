@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useGsap } from '@/lib/gsap';
-import useGetSession from '@/lib/api/session';
+import { useApi } from '@/components/providers/ApiProvider';
 import { LuCircleUser } from 'react-icons/lu';
 
 const navLinks = [
@@ -68,7 +68,7 @@ function UserNavChip({ name, image, className = '' }) {
   );
 }
 
-function CartIcon() {
+function CartIcon({ count = 0 }) {
   return (
     <>
       <svg
@@ -85,9 +85,11 @@ function CartIcon() {
         <circle cx="20" cy="21" r="1" />
         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
       </svg>
-      <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand text-white text-[9px] font-mono font-bold rounded-full flex items-center justify-center">
-        0
-      </span>
+      {count > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand text-white text-[9px] font-mono font-bold rounded-full flex items-center justify-center">
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
     </>
   );
 }
@@ -99,8 +101,8 @@ export default function Navbar() {
   // Mobile menu state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Session handling
-  const { session, isPending } = useGetSession();
+  // Session + cart from global API context
+  const { session, isPending, cartCount } = useApi();
   const name = session?.user?.name || 'User';
   const userImage = session?.user?.image || null;
 
@@ -195,7 +197,7 @@ export default function Navbar() {
                 className="relative w-9 h-9 flex items-center justify-center text-gray-600 hover:text-brand transition-colors duration-200"
                 aria-label="Shopping cart"
               >
-                <CartIcon />
+                <CartIcon count={cartCount} />
               </Link>
             </>
           ) : (
@@ -218,7 +220,7 @@ export default function Navbar() {
                 className="relative w-9 h-9 flex items-center justify-center text-muted hover:text-brand transition-colors duration-200"
                 aria-label="Shopping Cart"
               >
-                <CartIcon />
+                <CartIcon count={cartCount} />
               </button>
             </>
           )}

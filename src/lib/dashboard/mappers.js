@@ -1,0 +1,43 @@
+const CURRENCY = '৳';
+
+export function mapCartItemFromApi(item) {
+  return {
+    name: item.name,
+    price: item.unitPrice,
+    href: '/products',
+    image: item.image,
+    tags: item.tags || [],
+    currency: CURRENCY,
+    productId: item.productId,
+    quantity: item.quantity,
+  };
+}
+
+function formatOrderStatus(status) {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+export function mapOrderForDisplay(order) {
+  const itemsSummary = order.items
+    .map((item) => `${item.quantity}x ${item.name}`)
+    .join(', ');
+
+  return {
+    id: order.orderNumber,
+    date: new Date(order.createdAt).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }),
+    items: itemsSummary,
+    status: formatOrderStatus(order.status),
+    statusActive: ['pending', 'processing'].includes(order.status),
+    total: `${CURRENCY}${order.subtotal.toFixed(2)}`,
+  };
+}
+
+export function formatPrice(amount, currency = CURRENCY) {
+  return currency === CURRENCY
+    ? `${CURRENCY}${amount.toFixed(2)}`
+    : `$${amount.toFixed(2)}`;
+}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { loadGsap, prefersReducedMotion } from '@/lib/gsap';
 
 const MATERIAL_STYLES = {
@@ -63,7 +62,7 @@ function SectionLabel({ icon, children }) {
   );
 }
 
-export default function ProductDrawer({ product: rawProduct, onClose }) {
+export default function ProductDrawer({ product: rawProduct, onClose, onAddToCart }) {
   const product = normalizeProduct(rawProduct);
   const drawerRef = useRef(null);
   const backdropRef = useRef(null);
@@ -75,9 +74,20 @@ export default function ProductDrawer({ product: rawProduct, onClose }) {
   );
   const [qty, setQty] = useState(1);
   const [customText, setCustomText] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
 
   const calculatedPrice = product.pricePerUnit * qty;
   const canAdd = !product.hasCustomText || customText.trim().length > 0;
+
+  const handleAddToCart = async () => {
+    if (!canAdd || !onAddToCart) return;
+
+    setIsAdding(true);
+    const added = await onAddToCart(rawProduct, qty);
+    setIsAdding(false);
+
+    if (added) onClose();
+  };
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -396,20 +406,19 @@ export default function ProductDrawer({ product: rawProduct, onClose }) {
               {'// CUSTOM TEXT REQUIRED BEFORE ORDERING'}
             </p>
           )}
-          <Link
-            href="/dashboard"
-            onClick={(e) => {
-              if (!canAdd) e.preventDefault();
-            }}
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={!canAdd || isAdding}
             className={`w-full py-4 bg-[#0D0D0D] text-white font-display font-semibold text-lg rounded hover:bg-primary-container hover:text-on-primary-container transition-colors duration-200 flex items-center justify-center gap-3 uppercase ${
-              !canAdd ? 'pointer-events-none opacity-40' : ''
+              !canAdd || isAdding ? 'pointer-events-none opacity-40' : ''
             }`}
           >
             <span className="material-symbols-outlined">shopping_cart</span>
-            Add to Cart
-          </Link>
+            {isAdding ? 'Adding...' : 'Add to Cart'}
+          </button>
           <p className="font-mono text-[9px] text-secondary text-center mt-2 uppercase">
-            {'// PLACE ORDER FROM CONTACT PAGE'}
+            {'// OR PLACE A CUSTOM ORDER FROM THE CONTACT PAGE'}
           </p>
         </footer>
       </aside>

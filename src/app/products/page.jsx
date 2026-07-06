@@ -12,6 +12,8 @@ import {
   fadeUpOnScroll,
   fadeFromHidden,
 } from '@/lib/gsap';
+import { apiFetch } from '@/lib/api/client';
+import { useApi } from '@/components/providers/ApiProvider';
 
 const CATEGORIES = ['ALL', 'HOBBY', 'FUNCTIONAL', 'CUSTOM', 'COSPLAY', 'MINIATURES'];
 const MATERIAL_FILTERS = ['PLA+', 'PETG', 'TPU'];
@@ -23,73 +25,6 @@ const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest' },
 ];
 
-const PRODUCTS = [
-  {
-    id: 1,
-    name: 'Planetary Gearbox',
-    price: 24.0,
-    material: 'PLA+',
-    category: 'FUNCTIONAL',
-    specs: '120g / PLA+ / 0.16mm',
-    weight: '120g',
-    layerHeight: '0.16mm',
-    printTime: '4h 20m',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuD9fEi8PFbNIHkKP9dCStH27eGx4NRx-HDr-5cyELoBaAwiB6duXXVv2L_UG9R02mA9MVg7UmeQ69ygkmvXsfCCX-mpIGGcYizq_5rBPSNzhTDmgfN25AvhihN-F2nePhWkY2WgmsLIicfZSVmO4ZH0Ea5Cb69BQMhSevkIPbXtFcTcAY6HCsY69cm5QkacyiSlgu27-vZUGiCDjG9X2lPaASoiI5iEzFAb05Vn-xFIUHlpwIIbioGsuYZRIa4Nj3ZU16BzvzuYBmRy',
-    modalImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBv7n3W8WFyxOxlRo-P4BaxUUZG0gnrg0S43sGvYSbeSHNGdwVp9e3h3A2iQOnNMsqvhLGeTidFgS2OXC5J0SLyz6uB60d_3ijiiGwDws4uvALuEiXBA8f9nVMSnyIMtcLHcy20o6LmpyIpIjF7v8KUr0xIUKVG75U5A_LEpTXMd5H3mYnI-xcZj3FVrO7u5zKUvTTutWuORYDvoiVKZN3y-RHiC-l4oxUgUJO3m_8BzHyhrgbEAYH-mU83rEmihUh0xcCK_Spe4Ls0',
-    colors: ['#000000', '#ffffff', '#1db954'],
-  },
-  {
-    id: 2,
-    name: 'Articulated Dragon',
-    price: 35.0,
-    material: 'TPU',
-    category: 'HOBBY',
-    specs: '85g / TPU / 0.20mm',
-    weight: '85g',
-    layerHeight: '0.20mm',
-    printTime: '6h 10m',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDPPcyOrxEGoLx2nZ7MprWIQ5nLLLiqOv3suGIVgFcb-W07GkesGfzPfHpMq50gs7PvCoOivYqA-0H-3Do7kCl154irg8Sx8C4WV9OOZfsCuuhdQFK1l5p4CAjz3d1ogXuMZQvZ_L-3_NebVkHtBXiFW-1iuw9qMIO5CIlfu8EIDgWZ-7j_xPNy8LKTWokoWXnSW7eVH_nTA_5-N2hDfz2low1oTS_7WRH8zxCzDmUB9GHX1sIDlLegyJBqM1eyhp81fW_Zj3_3uVYl',
-    modalImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuDPPcyOrxEGoLx2nZ7MprWIQ5nLLLiqOv3suGIVgFcb-W07GkesGfzPfHpMq50gs7PvCoOivYqA-0H-3Do7kCl154irg8Sx8C4WV9OOZfsCuuhdQFK1l5p4CAjz3d1ogXuMZQvZ_L-3_NebVkHtBXiFW-1iuw9qMIO5CIlfu8EIDgWZ-7j_xPNy8LKTWokoWXnSW7eVH_nTA_5-N2hDfz2low1oTS_7WRH8zxCzDmUB9GHX1sIDlLegyJBqM1eyhp81fW_Zj3_3uVYl',
-    colors: ['#1db954', '#000000'],
-  },
-  {
-    id: 3,
-    name: 'Heavy Duty Bracket',
-    price: 18.5,
-    material: 'PETG',
-    category: 'FUNCTIONAL',
-    specs: '210g / PETG / 0.28mm',
-    weight: '210g',
-    layerHeight: '0.28mm',
-    printTime: '5h 45m',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBdkO3rwtsBiPdLfwRJ73TYFdkVMNqNfKrna4yo1qjTc04KmLZFaocqbrH5B-XG5_RB8KPo_YAoefD1lf3Dw1LLwC6OFk1NgY7nKD3WjLlkabsBWv4_QXt0XnHN4RFqbgjHdsaRwORtRvjMjYgOl6CZZ81_yd7ihtVLoQcj-mX2Vrf6hSf46GwYdlS2DfW2Y4K7J1BLbGMAVcqhum6O5GCCRSXEHWjZ8BGz-aWxPu_o83gZqiOnAmpYTWGBmlCXH2uwDQNi19Ie4hjd',
-    modalImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBdkO3rwtsBiPdLfwRJ73TYFdkVMNqNfKrna4yo1qjTc04KmLZFaocqbrH5B-XG5_RB8KPo_YAoefD1lf3Dw1LLwC6OFk1NgY7nKD3WjLlkabsBWv4_QXt0XnHN4RFqbgjHdsaRwORtRvjMjYgOl6CZZ81_yd7ihtVLoQcj-mX2Vrf6hSf46GwYdlS2DfW2Y4K7J1BLbGMAVcqhum6O5GCCRSXEHWjZ8BGz-aWxPu_o83gZqiOnAmpYTWGBmlCXH2uwDQNi19Ie4hjd',
-    colors: ['#3d3d3d', '#000000'],
-  },
-  {
-    id: 4,
-    name: 'Sci-Fi Soldier Mini',
-    price: 12.0,
-    material: 'RESIN',
-    category: 'MINIATURES',
-    specs: '15g / Resin / 0.05mm',
-    weight: '15g',
-    layerHeight: '0.05mm',
-    printTime: '2h 30m',
-    image:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAw99GDNWsbw-2pf_ek5RALitnAqpekiBxb0-sZDSt8satsu9fBWaD53mLZw6JhoYyioFwhUE5zTkSgCh3uAAt6qb1my0Y_AY5OipwFS4ODN8Tue0uq0sR45fJXUSizsnoWpUBSvvEGausQ-6wBeAaCrt1ibkd_cOys1etl72OHCZM4pWML9io4jgtHsoX7bMPbzLHCtCy5uit2w_hX1rIqJj4n3yO-zSLG9r5y6mdVbyqTl6DNFjWw6V3GiHoNYoy53JNQz5NE_yuC',
-    modalImage:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuAw99GDNWsbw-2pf_ek5RALitnAqpekiBxb0-sZDSt8satsu9fBWaD53mLZw6JhoYyioFwhUE5zTkSgCh3uAAt6qb1my0Y_AY5OipwFS4ODN8Tue0uq0sR45fJXUSizsnoWpUBSvvEGausQ-6wBeAaCrt1ibkd_cOys1etl72OHCZM4pWML9io4jgtHsoX7bMPbzLHCtCy5uit2w_hX1rIqJj4n3yO-zSLG9r5y6mdVbyqTl6DNFjWw6V3GiHoNYoy53JNQz5NE_yuC',
-    colors: ['#888888', '#000000'],
-  },
-];
-
 const STAT_BOXES = [
   { label: 'CATALOG', value: '50+ PRINTS' },
   { label: 'OPTIONS', value: '3 MATERIALS' },
@@ -99,38 +34,76 @@ const STAT_BOXES = [
 export default function ProductsPage() {
   const pageRef = useRef(null);
   const gridRef = useRef(null);
+  const { tokenReady, session, refreshCart } = useApi();
 
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [category, setCategory] = useState('ALL');
   const [materials, setMaterials] = useState([]);
   const [sort, setSort] = useState('featured');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [cartMessage, setCartMessage] = useState('');
 
-  const filteredProducts = useMemo(() => {
-    let result = PRODUCTS.filter((p) => {
-      const categoryMatch = category === 'ALL' || p.category === category;
-      const materialMatch =
-        materials.length === 0 || materials.includes(p.material);
-      return categoryMatch && materialMatch;
-    });
+  useEffect(() => {
+    async function loadProducts() {
+      setProductsLoading(true);
 
-    switch (sort) {
-      case 'price-asc':
-        result = [...result].sort((a, b) => a.price - b.price);
-        break;
-      case 'price-desc':
-        result = [...result].sort((a, b) => b.price - a.price);
-        break;
-      case 'newest':
-        result = [...result].sort((a, b) => b.id - a.id);
-        break;
-      default:
-        break;
+      try {
+        const params = new URLSearchParams();
+        if (category !== 'ALL') params.set('category', category);
+        if (materials.length === 1) params.set('material', materials[0]);
+        if (sort !== 'featured') params.set('sort', sort);
+
+        const query = params.toString();
+        const data = await apiFetch(`/products${query ? `?${query}` : ''}`);
+        setProducts(data);
+      } catch (err) {
+        console.error('Failed to load products:', err);
+      } finally {
+        setProductsLoading(false);
+      }
     }
 
-    return result;
+    loadProducts();
   }, [category, materials, sort]);
+
+  const filteredProducts = useMemo(() => {
+    if (materials.length <= 1) return products;
+
+    return products.filter(
+      (p) => materials.length === 0 || materials.includes(p.material)
+    );
+  }, [products, materials]);
+
+  const handleAddToCart = useCallback(
+    async (product, quantity = 1) => {
+      if (!session?.user) {
+        setCartMessage('Please log in to add items to your cart.');
+        return false;
+      }
+
+      if (!tokenReady) {
+        setCartMessage('Preparing your session. Try again in a moment.');
+        return false;
+      }
+
+      try {
+        await apiFetch('/cart/items', {
+          method: 'POST',
+          body: JSON.stringify({ productId: product.id, quantity }),
+        });
+        await refreshCart();
+        setCartMessage(`${product.name} added to cart.`);
+        return true;
+      } catch (err) {
+        setCartMessage(err.message || 'Failed to add to cart.');
+        return false;
+      }
+    },
+    [session, tokenReady, refreshCart]
+  );
 
   const toggleMaterial = (mat) => {
     setMaterials((prev) =>
@@ -305,6 +278,11 @@ export default function ProductsPage() {
             </div>
 
             {/* Product Grid */}
+            {cartMessage && (
+              <div className="mb-4 font-mono text-sm text-primary border border-primary/30 bg-primary/5 px-4 py-3 rounded-sm uppercase">
+                {cartMessage}
+              </div>
+            )}
             <div
               ref={gridRef}
               className={
@@ -313,17 +291,23 @@ export default function ProductsPage() {
                   : 'flex flex-col gap-4'
               }
             >
-              {filteredProducts.map((product) => (
+              {productsLoading ? (
+                <p className="font-body text-on-surface-variant col-span-full py-12 text-center">
+                  Loading products...
+                </p>
+              ) : (
+              filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
                   viewMode={viewMode}
                   onOpen={openDrawer}
                 />
-              ))}
+              ))
+              )}
             </div>
 
-            {filteredProducts.length === 0 && (
+            {!productsLoading && filteredProducts.length === 0 && (
               <div className="py-16 text-center">
                 <p className="font-mono text-sm text-secondary mb-2">{'// NO_RESULTS'}</p>
                 <p className="font-body text-base text-on-surface-variant">
@@ -372,7 +356,11 @@ export default function ProductsPage() {
       </div>
 
       {drawerOpen && selectedProduct && (
-        <ProductDrawer product={selectedProduct} onClose={closeDrawer} />
+        <ProductDrawer
+          product={selectedProduct}
+          onClose={closeDrawer}
+          onAddToCart={handleAddToCart}
+        />
       )}
     </PageShell>
   );

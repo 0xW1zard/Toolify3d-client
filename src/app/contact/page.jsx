@@ -5,6 +5,7 @@ import PageShell from '@/components/layout/PageShell';
 import PageHero from '@/components/ui/PageHero';
 import { useGsap, fadeUpOnMount, fadeUpOnScroll, staggerRevealOnScroll } from '@/lib/gsap';
 import { FaSquareWhatsapp } from "react-icons/fa6";
+import { apiFetch } from '@/lib/api/client';
 
 
 const MATERIAL_OPTIONS = [
@@ -62,10 +63,14 @@ export default function ContactPage() {
   const [activeFaq, setActiveFaq] = useState(null);
   const [form, setForm] = useState({
     name: '',
+    email: '',
     quantity: 1,
     material: MATERIAL_OPTIONS[0],
     description: '',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState('');
+  const [submitError, setSubmitError] = useState('');
 
   const toggleFaq = (index) => {
     setActiveFaq((prev) => (prev === index ? null : index));
@@ -75,8 +80,30 @@ export default function ContactPage() {
     fileInputRef.current?.click();
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitMessage('');
+    setSubmitError('');
+
+    try {
+      await apiFetch('/contact', {
+        method: 'POST',
+        body: JSON.stringify(form),
+      });
+      setSubmitMessage('Your request was sent. We will get back to you within 2 hours.');
+      setForm({
+        name: '',
+        email: '',
+        quantity: 1,
+        material: MATERIAL_OPTIONS[0],
+        description: '',
+      });
+    } catch (err) {
+      setSubmitError(err.message || 'Failed to send request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useGsap((gsap) => {
@@ -106,6 +133,16 @@ export default function ContactPage() {
               <h2 className="font-display font-bold text-[32px] mb-8">Order Request</h2>
 
               <form className="space-y-6" onSubmit={handleSubmit}>
+                {submitMessage && (
+                  <div className="font-mono text-sm text-primary border border-primary/30 bg-primary/5 px-4 py-3 rounded-sm">
+                    {submitMessage}
+                  </div>
+                )}
+                {submitError && (
+                  <div className="font-mono text-sm text-red-600 border border-red-200 bg-red-50 px-4 py-3 rounded-sm">
+                    {submitError}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
                   <div className="space-y-2">
                     <label className="font-mono text-xs uppercase text-on-surface-variant">Name</label>
@@ -113,33 +150,48 @@ export default function ContactPage() {
                       className="w-full border border-outline-variant focus:border-primary focus:ring-0 rounded-sm py-3 px-4 bg-surface-container-lowest outline-none"
                       placeholder="Your name"
                       type="text"
+                      required
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label className="font-mono text-xs uppercase text-on-surface-variant">Email</label>
+                    <input
+                      className="w-full border border-outline-variant focus:border-primary focus:ring-0 rounded-sm py-3 px-4 bg-surface-container-lowest outline-none"
+                      placeholder="you@example.com"
+                      type="email"
+                      required
+                      value={form.email}
+                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
                   <div className="space-y-2">
                     <label className="font-mono text-xs uppercase text-on-surface-variant">Quantity</label>
                     <input
                       className="w-full border border-outline-variant focus:border-primary focus:ring-0 rounded-sm py-3 px-4 bg-surface-container-lowest outline-none"
                       min={1}
                       type="number"
+                      required
                       value={form.quantity}
                       onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
                     />
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="font-mono text-xs uppercase text-on-surface-variant">Material Selection</label>
-                  <select
-                    className="w-full border border-outline-variant focus:border-primary focus:ring-0 rounded-sm py-3 px-4 bg-surface-container-lowest outline-none"
-                    value={form.material}
-                    onChange={(e) => setForm({ ...form, material: e.target.value })}
-                  >
-                    {MATERIAL_OPTIONS.map((opt) => (
-                      <option key={opt}>{opt}</option>
-                    ))}
-                  </select>
+                  <div className="space-y-2">
+                    <label className="font-mono text-xs uppercase text-on-surface-variant">Material Selection</label>
+                    <select
+                      className="w-full border border-outline-variant focus:border-primary focus:ring-0 rounded-sm py-3 px-4 bg-surface-container-lowest outline-none"
+                      value={form.material}
+                      onChange={(e) => setForm({ ...form, material: e.target.value })}
+                    >
+                      {MATERIAL_OPTIONS.map((opt) => (
+                        <option key={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -148,6 +200,7 @@ export default function ContactPage() {
                     className="w-full border border-outline-variant focus:border-primary focus:ring-0 rounded-sm py-3 px-4 bg-surface-container-lowest outline-none resize-y"
                     placeholder="Describe what you need — or just paste a reference image link."
                     rows={7}
+                    required
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                   />
@@ -157,9 +210,10 @@ export default function ContactPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-[#0D0D0D] text-white font-display font-semibold py-5 rounded-sm btn-hover transition-all flex justify-center items-center gap-2"
+                  disabled={isSubmitting}
+                  className="w-full bg-[#0D0D0D] text-white font-display font-semibold py-5 rounded-sm btn-hover transition-all flex justify-center items-center gap-2 disabled:opacity-60"
                 >
-                  Send Order Request
+                  {isSubmitting ? 'Sending...' : 'Send Order Request'}
                   <span className="material-symbols-outlined">trending_flat</span>
                 </button>
               </form>

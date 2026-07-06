@@ -1,13 +1,24 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import PageShell from '@/components/layout/PageShell';
 import QuoteCalculator from '@/components/home/QuoteCalculator';
 import { useGsap } from '@/lib/gsap';
+import { useApi } from '@/components/providers/ApiProvider';
 
 export default function CustomProjectPage() {
   const pageRef = useRef(null);
+  const router = useRouter();
+  const { session, isPending } = useApi();
+
+  useEffect(() => {
+    if (isPending) return;
+    if (!session?.user) {
+      router.replace('/login');
+    }
+  }, [isPending, session, router]);
 
   useGsap(
     (gsap) => {
@@ -23,6 +34,20 @@ export default function CustomProjectPage() {
     [],
     { scopeRef: pageRef, scrollTrigger: false }
   );
+
+  if (isPending) {
+    return (
+      <PageShell mainClassName="bg-background text-on-background">
+        <div className="p-gutter md:p-margin-page max-w-container-max mx-auto w-full py-24 text-center">
+          <p className="font-mono text-sm text-primary-container uppercase">{'// LOADING'}</p>
+        </div>
+      </PageShell>
+    );
+  }
+
+  if (!session?.user) {
+    return null;
+  }
 
   return (
     <PageShell mainClassName="bg-background text-on-background">
