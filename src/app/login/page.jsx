@@ -4,23 +4,18 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthPageLayout from "@/components/auth/AuthPageLayout";
-import AuthToast from "@/components/auth/AuthToast";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { useToast } from "@/components/providers/ToastProvider";
 import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [toast, setToast] = useState(null);
-
-  const showToast = (message, type = "success") => {
-    setToast({ message, type });
-    window.setTimeout(() => setToast(null), 4000);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,8 +42,7 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      <AuthPageLayout footerLeft="System Ready: 200 OK" footerRight="Auth_Service_v1.4.2">
+    <AuthPageLayout footerLeft="System Ready: 200 OK" footerRight="Auth_Service_v1.4.2">
         <div className="bg-white text-dark p-10 rounded-sm shadow-2xl border border-border">
           <div className="flex flex-col mb-8">
             <Link
@@ -163,9 +157,6 @@ export default function LoginPage() {
             <GoogleSignInButton onError={(message) => showToast(message, "error")} />
           </div>
         </div>
-      </AuthPageLayout>
-
-      <AuthToast toast={toast} />
-    </>
+    </AuthPageLayout>
   );
 }

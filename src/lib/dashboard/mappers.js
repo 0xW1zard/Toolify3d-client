@@ -5,7 +5,7 @@ export function mapCartItemFromApi(item) {
     name: item.name,
     price: item.unitPrice,
     href: '/products',
-    image: item.image,
+    image: item.image || item.images?.[0] || null,
     tags: item.tags || [],
     currency: CURRENCY,
     productId: item.productId,

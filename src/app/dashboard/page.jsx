@@ -29,7 +29,6 @@ export default function DashboardPage() {
     cartItems,
     orders,
     orderNotice,
-    checkoutMessage,
     isCheckingOut,
     isLoggingOut,
     handleQuantityChange,
@@ -73,8 +72,6 @@ export default function DashboardPage() {
     return null;
   }
 
-  const canCheckout = Boolean(displayProfile.address && displayProfile.phone);
-
   return (
     <PageShell mainClassName="bg-background text-on-background">
       <div
@@ -108,9 +105,7 @@ export default function DashboardPage() {
           <CartSection
             cartItems={cartItems}
             orderNotice={orderNotice}
-            checkoutMessage={checkoutMessage}
             isCheckingOut={isCheckingOut}
-            canCheckout={canCheckout}
             onQuantityChange={handleQuantityChange}
             onRemove={handleRemoveCartItem}
             onCheckout={handleCheckout}

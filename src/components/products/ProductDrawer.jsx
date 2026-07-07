@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { loadGsap, prefersReducedMotion } from '@/lib/gsap';
+import { useToast } from '@/components/providers/ToastProvider';
 
 const MATERIAL_STYLES = {
   'PLA+': 'bg-[#E8F5E9] text-[#2E7D32] border-[#C8E6C9]',
@@ -78,8 +79,10 @@ function SectionLabel({ icon, children }) {
 
 export default function ProductDrawer({ product: rawProduct, onClose, onAddToCart }) {
   const product = normalizeProduct(rawProduct);
+  const { showToast } = useToast();
   const drawerRef = useRef(null);
   const backdropRef = useRef(null);
+  const customTextRef = useRef(null);
 
   const [activeImg, setActiveImg] = useState(0);
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
@@ -88,13 +91,37 @@ export default function ProductDrawer({ product: rawProduct, onClose, onAddToCar
   );
   const [qty, setQty] = useState(1);
   const [customText, setCustomText] = useState('');
+  const [customTextError, setCustomTextError] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
   const calculatedPrice = product.pricePerUnit * qty;
-  const canAdd = !product.hasCustomText || customText.trim().length > 0;
+
+  const shakeCustomText = async () => {
+    const el = customTextRef.current;
+    if (!el || prefersReducedMotion()) return;
+
+    const { gsap } = await loadGsap();
+    gsap.fromTo(
+      el,
+      { x: 0 },
+      {
+        keyframes: { x: [-8, 8, -6, 6, -4, 4, 0] },
+        duration: 0.4,
+        ease: 'power1.inOut',
+      }
+    );
+  };
 
   const handleAddToCart = async () => {
-    if (!canAdd || !onAddToCart) return;
+    if (!onAddToCart || isAdding) return;
+
+    if (product.hasCustomText && customText.trim().length === 0) {
+      setCustomTextError(true);
+      showToast('Custom text is required for this product.', 'error');
+      shakeCustomText();
+      customTextRef.current?.focus();
+      return;
+    }
 
     setIsAdding(true);
     const added = await onAddToCart(rawProduct, qty);
@@ -173,7 +200,7 @@ export default function ProductDrawer({ product: rawProduct, onClose, onAddToCar
 
       <aside
         ref={drawerRef}
-        className="fixed top-0 right-0 h-full w-full max-w-[540px] bg-surface border-l border-outline-variant z-50 flex flex-col shadow-2xl translate-x-full"
+        className="fixed top-0 right-0 h-full w-full max-w-[600px] bg-surface border-l border-outline-variant z-50 flex flex-col shadow-2xl translate-x-full"
         aria-label="Product detail"
       >
         <header className="flex items-center justify-between p-6 border-b border-outline-variant bg-surface shrink-0">
@@ -260,11 +287,11 @@ export default function ProductDrawer({ product: rawProduct, onClose, onAddToCar
 
           <section className="flex items-baseline gap-2">
             <span className="font-mono text-[32px] text-on-background font-bold tracking-tight">
-              ${calculatedPrice.toFixed(2)}
+            BDT {calculatedPrice.toFixed(2)}
             </span>
             {qty > 1 && (
               <span className="font-mono text-[12px] text-on-surface-variant">
-                (${product.pricePerUnit.toFixed(2)} each)
+                (BDT {product.pricePerUnit.toFixed(2)} each)
               </span>
             )}
           </section>
@@ -358,12 +385,20 @@ export default function ProductDrawer({ product: rawProduct, onClose, onAddToCar
                 {'// CUSTOM_TEXT'}
               </p>
               <input
+                ref={customTextRef}
                 type="text"
                 value={customText}
-                onChange={(e) => setCustomText(e.target.value)}
+                onChange={(e) => {
+                  setCustomText(e.target.value);
+                  if (customTextError) setCustomTextError(false);
+                }}
                 maxLength={20}
                 placeholder="e.g. YOUR NAME or TEAM ALPHA"
-                className="w-full h-10 px-3 border border-outline-variant rounded-sm bg-surface font-mono text-sm text-on-background outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container placeholder:text-secondary"
+                className={`w-full h-10 px-3 border rounded-sm bg-surface font-mono text-sm text-on-background outline-none focus:ring-1 placeholder:text-secondary ${
+                  customTextError
+                    ? 'border-red-600 focus:border-red-600 focus:ring-red-600'
+                    : 'border-outline-variant focus:border-primary-container focus:ring-primary-container'
+                }`}
               />
               <div className="flex justify-between mt-2">
                 <span className="font-mono text-[9px] text-secondary">
@@ -438,17 +473,12 @@ export default function ProductDrawer({ product: rawProduct, onClose, onAddToCar
         </div>
 
         <footer className="p-6 border-t border-outline-variant bg-surface shrink-0">
-          {product.hasCustomText && customText.trim() === '' && (
-            <p className="font-mono text-[9px] text-amber-600 mb-2 uppercase">
-              {'// CUSTOM TEXT REQUIRED BEFORE ORDERING'}
-            </p>
-          )}
           <button
             type="button"
             onClick={handleAddToCart}
-            disabled={!canAdd || isAdding}
+            disabled={isAdding}
             className={`w-full py-4 bg-[#0D0D0D] text-white font-display font-semibold text-lg rounded hover:bg-primary-container hover:text-on-primary-container transition-colors duration-200 flex items-center justify-center gap-3 uppercase ${
-              !canAdd || isAdding ? 'pointer-events-none opacity-40' : ''
+              isAdding ? 'pointer-events-none opacity-40' : ''
             }`}
           >
             <span className="material-symbols-outlined">shopping_cart</span>

@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AuthPageLayout from "@/components/auth/AuthPageLayout";
-import AuthToast from "@/components/auth/AuthToast";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { useToast } from "@/components/providers/ToastProvider";
 import { authClient } from "@/lib/auth-client";
 
 const inputClassName =
@@ -13,6 +13,7 @@ const inputClassName =
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { showToast } = useToast();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,12 +22,6 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [toast, setToast] = useState(null);
-
-  const showToast = (message, type = "success") => {
-    setToast({ message, type });
-    window.setTimeout(() => setToast(null), 4000);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -73,8 +68,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <>
-      <AuthPageLayout maxWidth="max-w-[525px]">
+    <AuthPageLayout maxWidth="max-w-[525px]">
         <div className="bg-white text-dark p-8 rounded-sm shadow-2xl border border-border">
           <header className="mb-8">
             <div className="flex justify-between items-start mb-4">
@@ -237,9 +231,6 @@ export default function RegisterPage() {
             <GoogleSignInButton onError={(message) => showToast(message, "error")} />
           </div>
         </div>
-      </AuthPageLayout>
-
-      <AuthToast toast={toast} />
-    </>
+    </AuthPageLayout>
   );
 }

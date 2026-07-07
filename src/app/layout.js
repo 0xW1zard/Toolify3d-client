@@ -1,4 +1,5 @@
 import { ApiProvider } from "@/components/providers/ApiProvider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 import "./globals.css";
 
 export const metadata = {
@@ -22,7 +23,9 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-screen flex flex-col">
-        <ApiProvider>{children}</ApiProvider>
+        <ApiProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </ApiProvider>
       </body>
     </html>
   );

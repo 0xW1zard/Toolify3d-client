@@ -14,6 +14,7 @@ import {
 } from '@/lib/gsap';
 import { apiFetch } from '@/lib/api/client';
 import { useApi } from '@/components/providers/ApiProvider';
+import { useToast } from '@/components/providers/ToastProvider';
 
 const CATEGORIES = ['ALL', 'HOBBY', 'FUNCTIONAL', 'CUSTOM', 'COSPLAY', 'MINIATURES'];
 const MATERIAL_FILTERS = ['PLA+', 'PETG', 'TPU'];
@@ -35,6 +36,7 @@ export default function ProductsPage() {
   const pageRef = useRef(null);
   const gridRef = useRef(null);
   const { tokenReady, session, refreshCart } = useApi();
+  const { showToast } = useToast();
 
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(true);
@@ -44,7 +46,6 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState('grid');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [cartMessage, setCartMessage] = useState('');
 
   useEffect(() => {
     async function loadProducts() {
@@ -80,12 +81,12 @@ export default function ProductsPage() {
   const handleAddToCart = useCallback(
     async (product, quantity = 1) => {
       if (!session?.user) {
-        setCartMessage('Please log in to add items to your cart.');
+        showToast('Please log in to add items to your cart.', 'error');
         return false;
       }
 
       if (!tokenReady) {
-        setCartMessage('Preparing your session. Try again in a moment.');
+        showToast('Preparing your session. Try again in a moment.', 'error');
         return false;
       }
 
@@ -95,14 +96,14 @@ export default function ProductsPage() {
           body: JSON.stringify({ productId: product.id, quantity }),
         });
         await refreshCart();
-        setCartMessage(`${product.name} added to cart.`);
+        showToast(`${product.name} added to cart.`, 'success');
         return true;
       } catch (err) {
-        setCartMessage(err.message || 'Failed to add to cart.');
+        showToast(err.message || 'Failed to add to cart.', 'error');
         return false;
       }
     },
-    [session, tokenReady, refreshCart]
+    [session, tokenReady, refreshCart, showToast]
   );
 
   const toggleMaterial = (mat) => {
@@ -161,8 +162,21 @@ export default function ProductsPage() {
                 PRINTS.
               </h1>
             </div>
+            
+            {/* Top Stat Boxes Container */}
             <div className="flex flex-wrap gap-4">
-              {STAT_BOXES.map((box) => (
+              {/* Dynamic Showing Count */}
+              <div className="products-stat-box border border-outline-variant px-4 py-2 bg-surface min-w-[140px]">
+                <span className="font-mono text-sm block text-secondary uppercase">
+                  Showing
+                </span>
+                <span className="font-display text-xl font-bold text-on-background uppercase">
+                  {filteredProducts.length} Print{filteredProducts.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              
+              {/* Remaining Static Boxes (skips the first "CATALOG" box) */}
+              {STAT_BOXES.slice(1).map((box) => (
                 <div
                   key={box.label}
                   className="products-stat-box border border-outline-variant px-4 py-2 bg-surface"
@@ -181,6 +195,59 @@ export default function ProductsPage() {
         <div className="products-page-wrapper px-margin-page mx-auto max-w-container-max">
           {/* Sidebar */}
           <aside className="products-sidebar products-sidebar-dark pt-6 hidden md:block ">
+            
+            {/* Updated Full-Width Toolbar */}
+            <div className="products-toolbar flex flex-col gap-3 mb-8 pb-6 mr-3 border-b border-outline-variant">
+              <div className="flex w-full border border-outline-variant rounded-sm overflow-hidden bg-surface">
+                <button
+                  type="button"
+                  aria-label="Grid View"
+                  onClick={() => handleViewToggle('grid')}
+                  className={`flex-1 py-2 flex items-center justify-center transition-colors ${
+                    viewMode === 'grid'
+                      ? 'bg-surface-variant text-on-background'
+                      : 'text-secondary hover:bg-surface-variant'
+                  }`}
+                >
+                  <span
+                    className="material-symbols-outlined text-[20px]"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    grid_view
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  aria-label="List View"
+                  onClick={() => handleViewToggle('list')}
+                  className={`flex-1 py-2 flex items-center justify-center transition-colors border-l border-outline-variant ${
+                    viewMode === 'list'
+                      ? 'bg-surface-variant text-on-background'
+                      : 'text-secondary hover:bg-surface-variant'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">view_list</span>
+                </button>
+              </div>
+
+              <div className="relative w-full">
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  className="w-full appearance-none bg-surface border border-outline-variant text-on-background font-body text-sm rounded-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary px-3 py-2 pr-8 cursor-pointer"
+                >
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-secondary pointer-events-none text-[20px]">
+                  expand_more
+                </span>
+              </div>
+            </div>
+
             <div className="mb-8">
               <h3 className="font-mono text-sm text-primary-container mb-4 uppercase">
                 {'// CATEGORY'}
@@ -223,66 +290,10 @@ export default function ProductsPage() {
               </ul>
             </div>
           </aside>
-
+                
           {/* Main Content */}
           <main className="products-main-content py-6 md:pl-8">
-            {/* Toolbar */}
-            <div className="products-toolbar flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 pb-4 border-b border-outline-variant gap-4">
-              <div className="font-mono text-sm text-secondary uppercase">
-                SHOWING {filteredProducts.length} PRINT{filteredProducts.length !== 1 ? 'S' : ''}
-              </div>
-              <div className="flex items-center gap-4">
-                <select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  className="bg-surface border border-outline-variant text-on-background font-body text-base rounded-none focus:ring-primary focus:border-primary px-3 py-2"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex border border-outline-variant">
-                  <button
-                    type="button"
-                    aria-label="Grid View"
-                    onClick={() => handleViewToggle('grid')}
-                    className={`p-2 transition-colors ${
-                      viewMode === 'grid'
-                        ? 'bg-surface-container text-on-background'
-                        : 'bg-surface text-secondary hover:bg-surface-variant'
-                    }`}
-                  >
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontVariationSettings: "'FILL' 1" }}
-                    >
-                      grid_view
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="List View"
-                    onClick={() => handleViewToggle('list')}
-                    className={`p-2 transition-colors border-l border-outline-variant ${
-                      viewMode === 'list'
-                        ? 'bg-surface-container text-on-background'
-                        : 'bg-surface text-secondary hover:bg-surface-variant'
-                    }`}
-                  >
-                    <span className="material-symbols-outlined">view_list</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* Product Grid */}
-            {cartMessage && (
-              <div className="mb-4 font-mono text-sm text-primary border border-primary/30 bg-primary/5 px-4 py-3 rounded-sm uppercase">
-                {cartMessage}
-              </div>
-            )}
             <div
               ref={gridRef}
               className={

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApi } from '@/components/providers/ApiProvider';
+import { useToast } from '@/components/providers/ToastProvider';
 import { apiFetch, clearAccessToken } from '@/lib/api/client';
 import { authClient } from '@/lib/auth-client';
 import { mapCartItemFromApi, mapOrderForDisplay } from '@/lib/dashboard/mappers';
@@ -18,6 +19,7 @@ const EMPTY_PROFILE = {
 export function useDashboardData() {
   const router = useRouter();
   const { session, isPending, tokenReady, refreshCart } = useApi();
+  const { showToast } = useToast();
   const [customOrderState] = useState(getInitialCustomOrderState);
   const isCustomOrder = Boolean(customOrderState);
 
@@ -29,7 +31,6 @@ export function useDashboardData() {
   );
   const [orders, setOrders] = useState([]);
   const [orderNotice] = useState(customOrderState?.orderNotice ?? '');
-  const [checkoutMessage, setCheckoutMessage] = useState('');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -141,8 +142,15 @@ export function useDashboardData() {
   const handleCheckout = useCallback(async () => {
     if (!cartItems.length || isCustomOrder) return;
 
+    if (!displayProfile.address || !displayProfile.phone) {
+      showToast(
+        'Please add your shipping address and phone before checkout.',
+        'error'
+      );
+      return;
+    }
+
     setIsCheckingOut(true);
-    setCheckoutMessage('');
 
     try {
       const order = await apiFetch('/orders', {
@@ -158,18 +166,19 @@ export function useDashboardData() {
       });
 
       setCartItems([]);
-      setCheckoutMessage(
-        `Order ${order.orderNumber} placed. Payment on delivery — awaiting confirmation.`
+      showToast(
+        `Order ${order.orderNumber} placed. Payment on delivery — awaiting confirmation.`,
+        'success'
       );
       const ordersData = await apiFetch('/orders');
       setOrders(ordersData.map(mapOrderForDisplay));
       await refreshCart();
     } catch (err) {
-      setCheckoutMessage(err.message || 'Checkout failed');
+      showToast(err.message || 'Checkout failed', 'error');
     } finally {
       setIsCheckingOut(false);
     }
-  }, [cartItems, isCustomOrder, displayProfile, refreshCart]);
+  }, [cartItems, isCustomOrder, displayProfile, refreshCart, showToast]);
 
   const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
@@ -201,7 +210,6 @@ export function useDashboardData() {
     cartItems,
     orders,
     orderNotice,
-    checkoutMessage,
     isCheckingOut,
     isLoggingOut,
     isCustomOrder,

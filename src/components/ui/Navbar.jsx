@@ -166,7 +166,7 @@ export default function Navbar() {
                 {link.label}
                 {/* Active underline */}
                 {isActive && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-[3px] bg-brand rounded-full"></span>
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-[3px] bg-brand rounded-full"></span>
                 )}
               </Link>
             );
@@ -204,15 +204,9 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="hidden md:inline-flex font-body text-sm font-medium text-dark border border-border px-5 py-2 rounded-sm hover:border-muted hover:bg-alt-bg transition-all duration-200"
+                className="hidden md:inline-flex font-body text-sm font-medium text-white bg-dark border border-border px-5 py-2 rounded-sm hover:border-black hover:bg-white hover:text-dark transition-all duration-200"
               >
                 Login
-              </Link>
-              <Link
-                href="/contact"
-                className="hidden md:inline-flex font-body text-sm font-semibold text-white bg-dark px-5 py-2 rounded-sm hover:bg-brand transition-colors duration-200"
-              >
-                Get Started
               </Link>
               <div className="hidden md:block w-px h-6 bg-border mx-1" />
               <button

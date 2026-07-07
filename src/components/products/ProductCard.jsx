@@ -67,7 +67,7 @@ export default function ProductCard({ product, viewMode, onOpen }) {
           {product.name}
         </h4>
         <div className="font-mono text-xl text-primary-container mb-3">
-          ${product.price.toFixed(2)}
+        ৳{product.price.toFixed(2)}
         </div>
         <div className="font-mono text-[12px] text-[#888] mb-4 grow">{product.specs}</div>
         <button

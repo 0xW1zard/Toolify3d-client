@@ -7,9 +7,7 @@ const SHIPPING_FLAT = 5.0;
 export default function CartSection({
   cartItems,
   orderNotice,
-  checkoutMessage,
   isCheckingOut,
-  canCheckout,
   onQuantityChange,
   onRemove,
   onCheckout,
@@ -25,11 +23,6 @@ export default function CartSection({
       {orderNotice && (
         <div className="font-mono text-sm text-primary border border-primary/30 bg-primary/5 px-4 py-3 rounded-sm uppercase">
           {orderNotice}
-        </div>
-      )}
-      {checkoutMessage && (
-        <div className="font-mono text-sm text-primary border border-primary/30 bg-primary/5 px-4 py-3 rounded-sm uppercase">
-          {checkoutMessage}
         </div>
       )}
       <div className="flex items-baseline gap-2 justify-between">
@@ -95,7 +88,7 @@ export default function CartSection({
               <button
                 type="button"
                 onClick={onCheckout}
-                disabled={isCheckingOut || !canCheckout}
+                disabled={isCheckingOut || !cartItems.length}
                 className="btn-primary w-full py-3 mt-4 font-mono text-sm flex items-center justify-center gap-2 uppercase disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <span className="material-symbols-outlined text-[18px]">shopping_cart_checkout</span>
