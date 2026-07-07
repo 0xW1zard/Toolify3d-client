@@ -31,7 +31,7 @@ export default function Home() {
     <PageShell>
       <HeroSection />
       <StatsBar />
-      <QuoteCalculator />
+      <QuoteCalculator theme="light" />
       <ServiceGrid />
       <ProcessTimeline />
       <MaterialGrid />

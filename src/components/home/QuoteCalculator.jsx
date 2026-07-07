@@ -4,44 +4,106 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Section from '@/components/layout/Section';
 import SectionHeader from '@/components/ui/SectionHeader';
+import { QUOTE_MATERIALS } from '@/lib/quote/materials';
+import { parseModelFile, calculateQuote } from '@/lib/quote/calculateQuote';
+import {
+  saveCustomOrderFile,
+  PENDING_CUSTOM_FILE_KEY,
+} from '@/lib/quote/customOrderFileStore';
 
 export const CUSTOM_ORDER_KEY = 'toolify_custom_order';
 
-const FILAMENTS = [
-  { name: 'PLA', label: 'PLA+', price: 5 },
-  { name: 'PETG', label: 'PETG', price: 7 },
-  { name: 'TPU', label: 'TPU', price: 12 },
-];
+const MATERIALS = QUOTE_MATERIALS;
 
 const ACCEPTED_TYPES = ['.stl', '.obj'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-function estimateWeightFromFile(file) {
-  const sizeFactor = file.size / (1024 * 1024);
-  return Math.min(1000, Math.max(25, Math.round(sizeFactor * 40 + 50)));
+const THEMES = {
+  light: {
+    card: 'bg-white border border-border shadow-lg',
+    upload: 'upload-dashed-light bg-alt-bg',
+    uploadIcon: 'text-muted group-hover:text-brand',
+    uploadText: 'text-muted group-hover:text-dark',
+    uploadFileName: 'text-dark',
+    uploadHint: 'text-muted',
+    label: 'text-muted',
+    matInactive: 'border border-border bg-white hover:bg-alt-bg',
+    matActive: 'border-2 border-brand bg-brand/5',
+    matName: 'text-dark',
+    matTag: 'text-muted',
+    panel: 'bg-alt-bg border-2 border-brand',
+    panelLabel: 'text-muted',
+    rowLabel: 'text-text-secondary',
+    rowValue: 'text-dark',
+    divider: 'border-border',
+    totalLabel: 'text-brand',
+    totalCurrency: 'text-dark',
+    totalAmount: 'text-dark',
+    section: 'default',
+    headerLight: false,
+    gradient: 'from-brand/5',
+  },
+  dark: {
+    card: 'bg-[#1A1A1A] border border-[#2A2A2A] shadow-2xl',
+    upload: 'upload-dashed',
+    uploadIcon: 'text-white/40 group-hover:text-brand',
+    uploadText: 'text-white/40 group-hover:text-white',
+    uploadFileName: 'text-white',
+    uploadHint: 'text-white/40',
+    label: 'text-white/40',
+    matInactive: 'border border-[#2A2A2A] bg-[#1A1A1A] hover:bg-[#2A2A2A]',
+    matActive: 'border-2 border-brand bg-brand/10',
+    matName: 'text-white',
+    matTag: 'text-white/60',
+    panel: 'bg-dark border-2 border-brand',
+    panelLabel: 'text-white/40',
+    rowLabel: 'text-white/60',
+    rowValue: 'text-white',
+    divider: 'border-[#2A2A2A]',
+    totalLabel: 'text-brand',
+    totalCurrency: 'text-white',
+    totalAmount: 'text-white',
+    section: 'dark',
+    headerLight: true,
+    gradient: 'from-primary/5',
+  },
+};
+
+// Rough print-time heuristic. Volume/weight alone cannot yield slicer-accurate
+// timing, so this is labelled as an estimate in the UI.
+function estimatePrintTime(weight) {
+  if (!weight) return null;
+  const hours = Math.max(0.5, weight / 12);
+  return `${hours.toFixed(1)} hrs`;
 }
 
 export default function QuoteCalculator({
   embedded = false,
+  theme = 'light',
+  showHeader = true,
   checkoutHref = '/dashboard',
   eyebrow = '// QUOTE_ENGINE_V1',
   title = 'Upload. Select. Get Price.',
+  description = 'Drop your STL, pick a material, and get an instant estimate before checkout.',
   checkoutLabel = 'Proceed to Checkout',
+  className = '',
 }) {
+  const t = THEMES[theme] ?? THEMES.light;
   const router = useRouter();
   const fileInputRef = useRef(null);
-  const [currentWeight, setCurrentWeight] = useState(100);
-  const [currentPricePerGram, setCurrentPricePerGram] = useState(5);
-  const [activeFilament, setActiveFilament] = useState('PLA');
+  const [activeMaterial, setActiveMaterial] = useState(MATERIALS[0]);
+  const [infill, setInfill] = useState(20);
+  const [volumeCm3, setVolumeCm3] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
   const [fileError, setFileError] = useState('');
 
-  const selectFilament = (name, price) => {
-    setCurrentPricePerGram(price);
-    setActiveFilament(name);
-  };
+  const quote = volumeCm3
+    ? calculateQuote({ volumeCm3, material: activeMaterial, infill })
+    : null;
+  const estimatedWeight = quote?.estimatedWeight ?? null;
+  const totalPrice = quote?.totalCost ?? 0;
+  const printTime = estimatePrintTime(estimatedWeight);
 
   const validateFile = (file) => {
     const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
@@ -54,7 +116,7 @@ export default function QuoteCalculator({
     return '';
   };
 
-  const processFile = (file) => {
+  const processFile = async (file) => {
     const error = validateFile(file);
     if (error) {
       setFileError(error);
@@ -64,11 +126,17 @@ export default function QuoteCalculator({
     setFileError('');
     setUploadedFile(file);
     setIsAnalyzing(true);
+    setVolumeCm3(null);
 
-    setTimeout(() => {
-      setCurrentWeight(estimateWeightFromFile(file));
+    try {
+      const { volumeCm3: parsedVolume } = await parseModelFile(file);
+      setVolumeCm3(parsedVolume);
+    } catch (err) {
+      setUploadedFile(null);
+      setFileError(err.message || 'Could not analyze this file.');
+    } finally {
       setIsAnalyzing(false);
-    }, 1200);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -78,42 +146,43 @@ export default function QuoteCalculator({
 
   const handleDrop = (e) => {
     e.preventDefault();
-    setDragActive(false);
     const file = e.dataTransfer.files?.[0];
     if (file) processFile(file);
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = () => {
-    setDragActive(false);
   };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePlaceOrder = () => {
-    if (!uploadedFile) {
+  const handlePlaceOrder = async () => {
+    if (!uploadedFile || !estimatedWeight) {
       setFileError('Upload a project file before placing your order.');
       return;
     }
 
-    const filament = FILAMENTS.find((f) => f.name === activeFilament);
-    const total = currentWeight * currentPricePerGram;
+    // Hold the raw file in the browser (IndexedDB); it is only uploaded to
+    // Firebase Storage when the user confirms checkout from the dashboard cart.
+    await saveCustomOrderFile(PENDING_CUSTOM_FILE_KEY, uploadedFile);
 
     sessionStorage.setItem(
       CUSTOM_ORDER_KEY,
       JSON.stringify({
         type: 'custom',
+        fileKey: PENDING_CUSTOM_FILE_KEY,
         fileName: uploadedFile.name,
-        filament: filament?.label || activeFilament,
-        weight: currentWeight,
-        pricePerGram: currentPricePerGram,
-        total,
+        fileSize: uploadedFile.size,
+        fileType: `.${uploadedFile.name.split('.').pop()?.toLowerCase()}`,
+        material: { id: activeMaterial.id, name: activeMaterial.name },
+        filament: activeMaterial.name,
+        infill,
+        volumeCm3,
+        weight: estimatedWeight,
+        pricePerGram: activeMaterial.costPerGram,
+        total: totalPrice,
         placedAt: Date.now(),
       })
     );
@@ -121,122 +190,142 @@ export default function QuoteCalculator({
     router.push(checkoutHref);
   };
 
-  const total = currentWeight * currentPricePerGram;
+  const weightDisplay = isAnalyzing
+    ? 'Calculating...'
+    : estimatedWeight
+      ? `${estimatedWeight} g`
+      : '-- g';
+  const timeDisplay = isAnalyzing ? '-- hrs' : printTime ?? '-- hrs';
 
   const calculator = (
-    <div
-      className={`bg-white p-6 md:p-8 border border-border rounded-sm grid grid-cols-1 lg:grid-cols-2 gap-10 ${
-        embedded ? 'technical-border rounded-sm' : ''
-      }`}
-    >
-      <div>
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={handleUploadClick}
-          onKeyDown={(e) => e.key === 'Enter' && handleUploadClick()}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          className={`relative w-full aspect-square border-2 border-dashed bg-alt-bg flex flex-col items-center justify-center p-8 cursor-pointer group transition-colors duration-200 ${
-            dragActive ? 'border-brand bg-brand/5' : 'border-border hover:border-brand'
-          }`}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".stl,.obj"
-            className="hidden"
-            onChange={handleFileChange}
-          />
-          <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-brand" />
-          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-brand" />
-          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-brand" />
-          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-brand" />
-          <span className="material-symbols-outlined text-brand text-[48px] mb-4">upload_file</span>
-          {uploadedFile ? (
-            <>
-              <div className="font-mono text-sm text-dark text-center break-all px-4">
-                {uploadedFile.name}
-              </div>
-              <div className="font-body text-sm text-muted text-center mt-2">
-                {isAnalyzing ? 'Analyzing mesh volume...' : 'Click or drop to replace file'}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="font-mono text-sm text-dark text-center">DRAG &amp; DROP STL/OBJ FILES</div>
-              <div className="font-body text-sm text-muted text-center mt-2">Maximum size 50MB</div>
-            </>
-          )}
-        </div>
-        {fileError && (
-          <p className="font-mono text-xs text-[#ba1a1a] mt-3 uppercase">{fileError}</p>
-        )}
-      </div>
-
-      <div className="flex flex-col justify-between">
-        <div>
-          <label className="font-mono text-xs text-muted uppercase mb-3 block tracking-wider">
-            Select Filament
-          </label>
-          <div className="grid grid-cols-3 gap-2 mb-6">
-            {FILAMENTS.map((f) => (
-              <button
-                key={f.name}
-                type="button"
-                onClick={() => selectFilament(f.name, f.price)}
-                className={`p-3 border-2 text-center transition-all duration-200 rounded-sm ${
-                  activeFilament === f.name
-                    ? 'border-brand bg-brand/5'
-                    : 'border-border hover:border-brand'
-                }`}
-              >
-                <div className="font-display font-bold text-lg">{f.label}</div>
-                <div className="font-mono text-[10px] text-muted">৳{f.price}/gm</div>
-              </button>
-            ))}
-          </div>
-
-          <label className="font-mono text-xs text-muted uppercase mb-3 block tracking-wider">
-            Weight (Grams)
-          </label>
-          <input
-            className="w-full mb-2"
-            max="1000"
-            min="1"
-            onChange={(e) => setCurrentWeight(Number(e.target.value))}
-            type="range"
-            value={currentWeight}
-            disabled={isAnalyzing}
-          />
-          <div className="flex justify-between font-mono text-xs text-muted mb-6">
-            <span>1g</span>
-            <span className="text-dark font-medium">
-              {isAnalyzing ? 'Calculating...' : `${currentWeight}g`}
-            </span>
-            <span>1kg</span>
-          </div>
-        </div>
-
-        <div className="border-2 border-brand p-5 rounded-sm">
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-mono text-sm text-muted">Estimated Total</span>
-            <span className="font-display font-bold text-[32px] text-brand">
-              {isAnalyzing ? '...' : `৳${total}`}
-            </span>
-          </div>
-          <div className="font-mono text-[10px] text-muted leading-tight uppercase">
-            * Pricing excludes shipping. Final volume calculated after slice analysis.
-          </div>
-          <button
-            type="button"
-            onClick={handlePlaceOrder}
-            disabled={isAnalyzing}
-            className="w-full mt-4 bg-dark text-white py-3 font-mono text-sm rounded-sm hover:bg-brand transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+    <div className={`max-w-4xl mx-auto rounded-xl p-sm md:p-md ${t.card} ${className}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-md">
+        <div className="lg:col-span-3 flex flex-col gap-md">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleUploadClick}
+            onKeyDown={(e) => e.key === 'Enter' && handleUploadClick()}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            className={`h-48 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all group ${t.upload}`}
           >
-            {checkoutLabel}
-          </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".stl,.obj"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <span className={`material-symbols-outlined text-4xl mb-sm ${t.uploadIcon}`}>
+              cloud_upload
+            </span>
+            {uploadedFile ? (
+              <>
+                <span className={`font-mono text-sm text-center break-all px-4 uppercase ${t.uploadFileName}`}>
+                  {uploadedFile.name}
+                </span>
+                <span className={`font-mono text-xs mt-xs ${t.uploadHint}`}>
+                  {isAnalyzing ? 'Analyzing mesh volume...' : 'Click or drop to replace file'}
+                </span>
+              </>
+            ) : (
+              <span className={`font-mono text-sm uppercase ${t.uploadText}`}>
+                Drop .STL or .OBJ here
+              </span>
+            )}
+          </div>
+
+          {fileError && (
+            <p className="font-mono text-xs text-[#ba1a1a] uppercase -mt-sm">{fileError}</p>
+          )}
+
+          <div className="flex flex-col gap-sm">
+            <span className={`font-mono text-xs uppercase tracking-widest ${t.label}`}>
+              {'// MATERIAL_SELECT'}
+            </span>
+            <div className="grid grid-cols-3 gap-xs">
+              {MATERIALS.map((mat) => {
+                const isActive = activeMaterial.id === mat.id;
+                return (
+                  <button
+                    key={mat.id}
+                    type="button"
+                    onClick={() => setActiveMaterial(mat)}
+                    className={`p-sm rounded-lg flex flex-col items-center transition-all ${
+                      isActive ? t.matActive : t.matInactive
+                    }`}
+                  >
+                    <span className={`font-display font-semibold text-2xl ${t.matName}`}>{mat.name}</span>
+                    <span className={`font-mono text-[10px] mt-xs uppercase ${t.matTag}`}>{mat.tag}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-sm">
+            <span className={`font-mono text-xs uppercase tracking-widest ${t.label}`}>
+              {'// INFILL_CONTROL'}
+            </span>
+            <div className="flex items-center gap-md">
+              <input
+                className="grow accent-brand"
+                type="range"
+                min={5}
+                max={100}
+                value={infill}
+                onChange={(e) => setInfill(Number(e.target.value))}
+                disabled={isAnalyzing}
+              />
+              <span className="font-mono text-2xl font-semibold text-brand w-16">{infill}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className={`lg:col-span-2 rounded-lg p-md flex flex-col justify-between ${t.panel}`}>
+          <div>
+            <span className={`font-mono text-xs uppercase mb-md block tracking-widest ${t.panelLabel}`}>
+              {'// ANALYSIS_REPORT'}
+            </span>
+            <div className={`flex justify-between border-b py-sm ${t.divider}`}>
+              <span className={t.rowLabel}>Estimated Weight</span>
+              <span className={`font-mono ${t.rowValue}`}>{weightDisplay}</span>
+            </div>
+            <div className={`flex justify-between border-b py-sm ${t.divider}`}>
+              <span className={t.rowLabel}>Selected Material</span>
+              <span className={`font-mono ${t.rowValue}`}>{activeMaterial.name}</span>
+            </div>
+            <div className={`flex justify-between border-b py-sm ${t.divider}`}>
+              <span className={t.rowLabel}>Print Duration</span>
+              <span className={`font-mono ${t.rowValue}`}>{timeDisplay}</span>
+            </div>
+          </div>
+
+          <div className="mt-xl">
+            <span className={`font-mono text-xs block mb-xs uppercase tracking-widest ${t.totalLabel}`}>
+              Total Cost
+            </span>
+            <div className="flex items-baseline gap-xs">
+              <span className={`font-display font-extrabold text-4xl ${t.totalCurrency}`}>৳</span>
+              <span className={`font-display font-extrabold text-5xl ${t.totalAmount}`}>
+                {isAnalyzing ? '...' : totalPrice}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handlePlaceOrder}
+              disabled={isAnalyzing}
+              className="w-full bg-brand text-white py-sm mt-md font-bold uppercase rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-xs disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span>{checkoutLabel}</span>
+              <span className="material-symbols-outlined">arrow_forward</span>
+            </button>
+            <p className={`font-mono text-[10px] mt-sm leading-tight ${t.panelLabel}`}>
+              Estimate only. Final weight is confirmed after slicing; walls and
+              supports may affect actual material usage.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -247,14 +336,19 @@ export default function QuoteCalculator({
   }
 
   return (
-    <Section variant="alt" narrow className="reveal-on-scroll">
-      <SectionHeader
-        align="center"
-        eyebrow={eyebrow}
-        title={title}
-        className="mb-12"
-      />
+    <Section variant={t.section} className="reveal-on-scroll py-xl relative overflow-hidden">
+      {showHeader && (
+        <SectionHeader
+          align="center"
+          light={t.headerLight}
+          eyebrow={eyebrow}
+          title={title}
+          description={description}
+          className="mb-lg"
+        />
+      )}
       {calculator}
+      <div className={`absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l ${t.gradient} to-transparent pointer-events-none`} />
     </Section>
   );
 }

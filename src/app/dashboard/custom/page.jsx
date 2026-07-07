@@ -37,9 +37,9 @@ export default function CustomProjectPage() {
 
   if (isPending) {
     return (
-      <PageShell mainClassName="bg-background text-on-background">
+      <PageShell mainClassName="bg-background min-h-screen text-on-background">
         <div className="p-gutter md:p-margin-page max-w-container-max mx-auto w-full py-24 text-center">
-          <p className="font-mono text-sm text-primary-container uppercase">{'// LOADING'}</p>
+          <p className="font-mono text-md text-primary-container uppercase">{'// LOADING'}</p>
         </div>
       </PageShell>
     );
@@ -77,7 +77,7 @@ export default function CustomProjectPage() {
           </div>
         </header>
 
-        <div className="custom-project-reveal max-w-5xl mx-auto mt-5 mb-12">
+        <div className="custom-project-reveal md:min-w-[900px] mx-auto mt-5 mb-12">
           <QuoteCalculator
             embedded
             checkoutHref="/dashboard"

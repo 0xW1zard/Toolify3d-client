@@ -8,6 +8,12 @@ import { apiFetch, clearAccessToken } from '@/lib/api/client';
 import { authClient } from '@/lib/auth-client';
 import { mapCartItemFromApi, mapOrderForDisplay } from '@/lib/dashboard/mappers';
 import { getInitialCustomOrderState } from '@/lib/dashboard/customOrder';
+import { CUSTOM_ORDER_KEY } from '@/components/home/QuoteCalculator';
+import {
+  getCustomOrderFile,
+  clearCustomOrderFile,
+} from '@/lib/quote/customOrderFileStore';
+import { uploadCustomOrderFile } from '@/lib/firebase/uploadCustomOrderFile';
 
 const EMPTY_PROFILE = {
   imageUrl: '',
@@ -139,8 +145,76 @@ export function useDashboardData() {
     }
   }, []);
 
+  const handleCustomCheckout = useCallback(async () => {
+    const order = customOrderState?.order;
+    if (!order) return;
+
+    if (!displayProfile.address || !displayProfile.phone) {
+      showToast(
+        'Please add your shipping address and phone before checkout.',
+        'error'
+      );
+      return;
+    }
+
+    setIsCheckingOut(true);
+
+    try {
+      const file = await getCustomOrderFile(order.fileKey);
+      if (!file) {
+        throw new Error('Your uploaded file was lost. Please re-upload and try again.');
+      }
+
+      // Upload the printable file straight to Firebase Storage; only the
+      // returned URL is stored in MongoDB.
+      const { fileUrl, storagePath, fileSize, fileName } = await uploadCustomOrderFile(
+        session.user.id,
+        file
+      );
+
+      const created = await apiFetch('/orders/custom', {
+        method: 'POST',
+        body: JSON.stringify({
+          fileName,
+          fileUrl,
+          storagePath,
+          fileSize,
+          fileType: order.fileType,
+          material: order.material,
+          infill: order.infill,
+          volumeCm3: order.volumeCm3,
+          estimatedWeight: order.weight,
+          pricePerGram: order.pricePerGram,
+          totalCost: order.total,
+          shippingAddress: {
+            name: displayProfile.name,
+            phone: displayProfile.phone,
+            address: displayProfile.address,
+          },
+        }),
+      });
+
+      await clearCustomOrderFile(order.fileKey);
+      sessionStorage.removeItem(CUSTOM_ORDER_KEY);
+      setCartItems([]);
+      showToast(
+        `Order ${created.orderNumber} placed. Payment on delivery — awaiting confirmation.`,
+        'success'
+      );
+    } catch (err) {
+      showToast(err.message || 'Checkout failed', 'error');
+    } finally {
+      setIsCheckingOut(false);
+    }
+  }, [customOrderState, displayProfile, session, showToast]);
+
   const handleCheckout = useCallback(async () => {
-    if (!cartItems.length || isCustomOrder) return;
+    if (isCustomOrder) {
+      await handleCustomCheckout();
+      return;
+    }
+
+    if (!cartItems.length) return;
 
     if (!displayProfile.address || !displayProfile.phone) {
       showToast(
@@ -178,7 +252,7 @@ export function useDashboardData() {
     } finally {
       setIsCheckingOut(false);
     }
-  }, [cartItems, isCustomOrder, displayProfile, refreshCart, showToast]);
+  }, [cartItems, isCustomOrder, handleCustomCheckout, displayProfile, refreshCart, showToast]);
 
   const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);

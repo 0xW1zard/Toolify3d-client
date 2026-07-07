@@ -1,15 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
 import Link from 'next/link';
 import PageShell from '@/components/layout/PageShell';
+import QuoteCalculator from '@/components/home/QuoteCalculator';
 import { useGsap, fadeUpOnMount, fadeUpOnScroll } from '@/lib/gsap';
-
-const MATERIALS = [
-  { name: 'PLA+', rate: 5, tag: 'Precision' },
-  { name: 'PETG', rate: 8, tag: 'Tough' },
-  { name: 'TPU', rate: 12, tag: 'Flex' },
-];
 
 const PRICING_ROWS = [
   {
@@ -84,41 +78,6 @@ const DESIGN_FEATURES = [
 ];
 
 export default function PricingPage() {
-  const fileInputRef = useRef(null);
-  const [activeMaterial, setActiveMaterial] = useState(MATERIALS[0]);
-  const [density, setDensity] = useState(20);
-  const [weight, setWeight] = useState(null);
-  const [printTime, setPrintTime] = useState(null);
-  const [isCalculating, setIsCalculating] = useState(false);
-
-  const densityMultiplier = 1 + (density - 20) / 100;
-  const totalPrice = weight ? Math.round(weight * activeMaterial.rate * densityMultiplier) : 0;
-
-  const selectMaterial = (material) => {
-    setActiveMaterial(material);
-  };
-
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files?.length > 0) {
-      setIsCalculating(true);
-      setWeight(null);
-      setPrintTime(null);
-
-      setTimeout(() => {
-        setWeight(42.5);
-        setPrintTime('3.5 hrs');
-        setIsCalculating(false);
-      }, 1500);
-    }
-  };
-
-  const weightDisplay = isCalculating ? 'Calculating...' : weight ? `${weight} g` : '-- g';
-  const timeDisplay = isCalculating ? '-- hrs' : printTime ?? '-- hrs';
-
   useGsap((gsap) => {
     fadeUpOnMount(gsap, '.pricing-hero-reveal', { y: 30 });
     fadeUpOnScroll(gsap, '.reveal-on-scroll');
@@ -141,115 +100,7 @@ export default function PricingPage() {
               </p>
             </div>
 
-            <div className="max-w-4xl mx-auto bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-sm md:p-md shadow-2xl">
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-md">
-                {/* Left: Upload & Inputs */}
-                <div className="lg:col-span-3 flex flex-col gap-md">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    onClick={handleUploadClick}
-                    onKeyDown={(e) => e.key === 'Enter' && handleUploadClick()}
-                    className="upload-dashed h-48 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all group"
-                  >
-                    <input
-                      ref={fileInputRef}
-                      className="hidden"
-                      type="file"
-                      accept=".stl,.obj"
-                      onChange={handleFileChange}
-                    />
-                    <span className="material-symbols-outlined text-4xl text-white/40 group-hover:text-[#1DB954] mb-sm">
-                      cloud_upload
-                    </span>
-                    <span className="font-mono text-sm text-white/40 group-hover:text-white uppercase">
-                      Drop .STL or .OBJ here
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col gap-sm">
-                    <span className="font-mono text-xs text-white/40 uppercase tracking-widest">
-                      {'// MATERIAL_SELECT'}
-                    </span>
-                    <div className="grid grid-cols-3 gap-xs">
-                      {MATERIALS.map((mat) => {
-                        const isActive = activeMaterial.name === mat.name;
-                        return (
-                          <button
-                            key={mat.name}
-                            type="button"
-                            onClick={() => selectMaterial(mat)}
-                            className={`p-sm rounded-lg flex flex-col items-center transition-all ${
-                              isActive
-                                ? 'border-2 border-[#1DB954] bg-[#1DB954]/10'
-                                : 'border border-[#2A2A2A] bg-[#1A1A1A] hover:bg-[#2A2A2A]'
-                            }`}
-                          >
-                            <span className="font-display font-semibold text-2xl text-white">{mat.name}</span>
-                            <span className="font-mono text-[10px] text-white/60 mt-xs uppercase">{mat.tag}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-sm">
-                    <span className="font-mono text-xs text-white/40 uppercase tracking-widest">
-                      {'// DENSITY_CONTROL'}
-                    </span>
-                    <div className="flex items-center gap-md">
-                      <input
-                        className="flex-grow accent-[#1DB954]"
-                        type="range"
-                        min={5}
-                        max={100}
-                        value={density}
-                        onChange={(e) => setDensity(Number(e.target.value))}
-                      />
-                      <span className="font-mono text-2xl font-semibold text-[#1DB954] w-16">{density}%</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right: Price Panel */}
-                <div className="lg:col-span-2 bg-[#0D0D0D] border-2 border-[#1DB954] rounded-lg p-md flex flex-col justify-between">
-                  <div>
-                    <span className="font-mono text-xs text-white/40 uppercase mb-md block tracking-widest">
-                      {'// ANALYSIS_REPORT'}
-                    </span>
-                    <div className="flex justify-between border-b border-[#2A2A2A] py-sm">
-                      <span className="text-white/60">Estimated Weight</span>
-                      <span className="font-mono text-white">{weightDisplay}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-[#2A2A2A] py-sm">
-                      <span className="text-white/60">Selected Material</span>
-                      <span className="font-mono text-white">{activeMaterial.name}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-[#2A2A2A] py-sm">
-                      <span className="text-white/60">Print Duration</span>
-                      <span className="font-mono text-white">{timeDisplay}</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-xl">
-                    <span className="font-mono text-xs text-[#1DB954] block mb-xs uppercase tracking-widest">
-                      Total Cost
-                    </span>
-                    <div className="flex items-baseline gap-xs">
-                      <span className="font-display font-extrabold text-4xl text-white">৳</span>
-                      <span className="font-display font-extrabold text-5xl text-white">{totalPrice}</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="w-full bg-[#1DB954] text-white py-sm mt-md font-bold uppercase rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-xs"
-                    >
-                      <span>Proceed to Checkout</span>
-                      <span className="material-symbols-outlined">arrow_forward</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <QuoteCalculator embedded theme="dark" />
           </div>
 
           <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />

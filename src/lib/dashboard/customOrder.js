@@ -8,8 +8,12 @@ export function getInitialCustomOrderState() {
 
   try {
     const order = JSON.parse(raw);
-    sessionStorage.removeItem(CUSTOM_ORDER_KEY);
+    // Note: the entry is intentionally NOT removed here — the file blob still
+    // lives in IndexedDB and the raw order metadata is needed at checkout to
+    // upload the file and create the CustomOrder. Both are cleared only after a
+    // successful checkout.
     return {
+      order,
       cartItem: {
         name: order.fileName,
         price: order.total,
