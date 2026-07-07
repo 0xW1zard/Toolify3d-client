@@ -18,8 +18,20 @@ const COLOR_LABELS = {
   '#888888': 'Gray',
 };
 
+function formatDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 function normalizeProduct(product) {
-  const images = [product.image, product.modalImage].filter(
+  const apiImages = Array.isArray(product.images) ? product.images : [];
+  const images = (apiImages.length ? apiImages : [product.image, product.modalImage]).filter(
     (img, i, arr) => img && arr.indexOf(img) === i
   );
 
@@ -29,7 +41,7 @@ function normalizeProduct(product) {
   }));
 
   return {
-    id: product.id,
+    id: product._id || product.id,
     name: product.name,
     category: product.category,
     material: product.material,
@@ -47,7 +59,9 @@ function normalizeProduct(product) {
       infill: product.infill || '20%',
       supports: product.supports || 'As needed',
     },
-    hasCustomText: product.hasCustomText ?? true,
+    hasCustomText: product.hasCustomText ?? false,
+    featured: product.featured ?? false,
+    createdAt: formatDate(product.createdAt),
   };
 }
 
@@ -216,7 +230,7 @@ export default function ProductDrawer({ product: rawProduct, onClose, onAddToCar
           </section>
 
           <section className="space-y-2 border-b border-outline-variant pb-6">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="font-mono text-[12px] text-on-surface-variant tracking-widest uppercase">
                 {product.category.replace(/_/g, ' ')}
               </span>
@@ -228,6 +242,12 @@ export default function ProductDrawer({ product: rawProduct, onClose, onAddToCar
               >
                 {product.material}
               </span>
+              {product.featured && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm font-mono text-[10px] uppercase bg-primary-container text-on-primary-container">
+                  <span className="material-symbols-outlined text-[12px]">star</span>
+                  Featured
+                </span>
+              )}
             </div>
             <h2 className="font-display font-bold text-[32px] text-on-background leading-tight">
               {product.name}
@@ -397,6 +417,23 @@ export default function ProductDrawer({ product: rawProduct, onClose, onAddToCar
             <p className="font-body text-base text-secondary leading-relaxed pt-2">
               {product.description}
             </p>
+
+            <dl className="flex flex-col gap-2 border-t border-outline-variant pt-4 font-mono text-[11px]">
+              {product.createdAt && (
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="text-secondary uppercase tracking-wide">Added</dt>
+                  <dd className="text-on-surface-variant">{product.createdAt}</dd>
+                </div>
+              )}
+              {product.id && (
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="text-secondary uppercase tracking-wide">Product ID</dt>
+                  <dd className="text-on-surface-variant truncate max-w-[60%]" title={product.id}>
+                    {product.id}
+                  </dd>
+                </div>
+              )}
+            </dl>
           </section>
         </div>
 

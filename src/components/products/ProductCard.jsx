@@ -38,12 +38,20 @@ export default function ProductCard({ product, viewMode, onOpen }) {
       >
         <div
           className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-          style={{ backgroundImage: `url('${product.image}')` }}
+          style={{
+            backgroundImage: `url('${product.image || product.images?.[0] || ''}')`,
+          }}
         />
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           <span className="bg-[#0D0D0D] text-white border border-[#333] px-2 py-0.5 font-mono text-[10px] uppercase">
             {product.material}
           </span>
+          {product.featured && (
+            <span className="inline-flex items-center gap-1 bg-primary-container text-dark px-2 py-0.5 font-mono text-[10px] uppercase font-bold">
+              <span className="material-symbols-outlined text-[12px]">star</span>
+              Featured
+            </span>
+          )}
         </div>
         <div className="absolute top-2 right-2">
           <CategoryBadge category={product.category} />
@@ -55,7 +63,7 @@ export default function ProductCard({ product, viewMode, onOpen }) {
         </div>
       </div>
       <div className={`p-4 flex flex-col grow ${viewMode === 'list' ? 'justify-center' : ''}`}>
-        <h4 className="font-display text-[18px] font-bold mb-1 truncate text-white">
+        <h4 className="font-display text-[18px] font-bold mb-1 truncate text-gray-800">
           {product.name}
         </h4>
         <div className="font-mono text-xl text-primary-container mb-3">

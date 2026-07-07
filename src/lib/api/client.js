@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+// Same-origin /api/v1/* is proxied to the Express API via next.config rewrites.
+// Do NOT point this at localhost:5000 — session cookies live on the Next.js origin.
+const API_BASE = '/api/v1';
 
 let accessToken = null;
 
@@ -15,7 +17,7 @@ export function getAccessToken() {
 }
 
 export async function fetchToken() {
-  const res = await fetch(`${API_URL}/api/v1/auth/token`, {
+  const res = await fetch(`${API_BASE}/auth/token`, {
     method: 'POST',
     credentials: 'include',
   });
@@ -39,7 +41,7 @@ export async function apiFetch(path, options = {}) {
     headers.Authorization = `Bearer ${accessToken}`;
   }
 
-  let res = await fetch(`${API_URL}/api/v1${path}`, {
+  let res = await fetch(`${API_BASE}${path}`, {
     ...options,
     credentials: 'include',
     headers,
@@ -48,7 +50,7 @@ export async function apiFetch(path, options = {}) {
   if (res.status === 401 && accessToken) {
     await fetchToken();
     headers.Authorization = `Bearer ${accessToken}`;
-    res = await fetch(`${API_URL}/api/v1${path}`, {
+    res = await fetch(`${API_BASE}${path}`, {
       ...options,
       credentials: 'include',
       headers,
