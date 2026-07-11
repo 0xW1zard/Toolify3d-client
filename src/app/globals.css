@@ -367,21 +367,21 @@ input[type="range"]::-moz-range-thumb {
   transform: translateY(20px);
 }
 
-.product-drawer-body::-webkit-scrollbar {
+.product-modal-body::-webkit-scrollbar {
   width: 8px;
 }
 
-.product-drawer-body::-webkit-scrollbar-track {
+.product-modal-body::-webkit-scrollbar-track {
   background: var(--color-surface-container-lowest);
   border-left: 1px solid var(--color-outline-variant);
 }
 
-.product-drawer-body::-webkit-scrollbar-thumb {
+.product-modal-body::-webkit-scrollbar-thumb {
   background: var(--color-outline-variant);
   border-radius: 4px;
 }
 
-.product-drawer-body::-webkit-scrollbar-thumb:hover {
+.product-modal-body::-webkit-scrollbar-thumb:hover {
   background: var(--color-outline);
 }
 

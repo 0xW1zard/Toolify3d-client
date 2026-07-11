@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import PageShell from '@/components/layout/PageShell';
 import ProductCard from '@/components/products/ProductCard';
-import ProductDrawer from '@/components/products/ProductDrawer';
+import ProductModal from '@/components/products/ProductModal';
 import {
   useGsap,
   loadGsap,
@@ -49,7 +49,7 @@ export default function ProductsPage() {
   const [sort, setSort] = useState('featured');
   const [viewMode, setViewMode] = useState('grid');
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   currentPageRef.current = currentPage;
 
@@ -141,13 +141,13 @@ export default function ProductsPage() {
     );
   };
 
-  const openDrawer = useCallback((product) => {
+  const openModal = useCallback((product) => {
     setSelectedProduct(product);
-    setDrawerOpen(true);
+    setModalOpen(true);
   }, []);
 
-  const closeDrawer = useCallback(() => {
-    setDrawerOpen(false);
+  const closeModal = useCallback(() => {
+    setModalOpen(false);
     setSelectedProduct(null);
   }, []);
 
@@ -348,7 +348,7 @@ export default function ProductsPage() {
                   key={product.id}
                   product={product}
                   viewMode={viewMode}
-                  onOpen={openDrawer}
+                  onOpen={openModal}
                 />
               ))
               )}
@@ -449,10 +449,10 @@ export default function ProductsPage() {
         </section>
       </div>
 
-      {drawerOpen && selectedProduct && (
-        <ProductDrawer
+      {modalOpen && selectedProduct && (
+        <ProductModal
           product={selectedProduct}
-          onClose={closeDrawer}
+          onClose={closeModal}
           onAddToCart={handleAddToCart}
         />
       )}
