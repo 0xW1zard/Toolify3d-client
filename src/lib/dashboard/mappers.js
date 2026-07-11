@@ -17,6 +17,14 @@ function formatOrderStatus(status) {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+function formatOrderDate(value) {
+  return new Date(value).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 export function mapOrderForDisplay(order) {
   const itemsSummary = order.items
     .map((item) => `${item.quantity}x ${item.name}`)
@@ -24,15 +32,28 @@ export function mapOrderForDisplay(order) {
 
   return {
     id: order.orderNumber,
-    date: new Date(order.createdAt).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
+    date: formatOrderDate(order.createdAt),
     items: itemsSummary,
     status: formatOrderStatus(order.status),
     statusActive: ['pending', 'processing'].includes(order.status),
     total: `${CURRENCY}${order.subtotal.toFixed(2)}`,
+    createdAt: order.createdAt,
+  };
+}
+
+export function mapCustomOrderForDisplay(order) {
+  const materialName = order.material?.name ? ` (${order.material.name})` : '';
+
+  return {
+    id: order.orderNumber,
+    date: formatOrderDate(order.createdAt),
+    items: `Custom print — ${order.fileName}${materialName}`,
+    status: formatOrderStatus(order.status),
+    statusActive: ['pending', 'processing'].includes(order.status),
+    total: `${CURRENCY}${(order.totalCost ?? 0).toFixed(2)}`,
+    isCustom: true,
+    fileUrl: order.fileUrl,
+    createdAt: order.createdAt,
   };
 }
 

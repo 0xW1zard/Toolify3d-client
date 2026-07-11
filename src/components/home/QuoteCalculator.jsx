@@ -10,6 +10,7 @@ import {
   saveCustomOrderFile,
   PENDING_CUSTOM_FILE_KEY,
 } from '@/lib/quote/customOrderFileStore';
+import { useToast } from '@/components/providers/ToastProvider';
 
 export const CUSTOM_ORDER_KEY = 'toolify_custom_order';
 
@@ -26,6 +27,7 @@ const THEMES = {
     uploadText: 'text-muted group-hover:text-dark',
     uploadFileName: 'text-dark',
     uploadHint: 'text-muted',
+    uploadOverlay: 'bg-white/70',
     label: 'text-muted',
     matInactive: 'border border-border bg-white hover:bg-alt-bg',
     matActive: 'border-2 border-brand bg-brand/5',
@@ -50,6 +52,7 @@ const THEMES = {
     uploadText: 'text-white/40 group-hover:text-white',
     uploadFileName: 'text-white',
     uploadHint: 'text-white/40',
+    uploadOverlay: 'bg-[#1A1A1A]/75',
     label: 'text-white/40',
     matInactive: 'border border-[#2A2A2A] bg-[#1A1A1A] hover:bg-[#2A2A2A]',
     matActive: 'border-2 border-brand bg-brand/10',
@@ -90,16 +93,16 @@ export default function QuoteCalculator({
 }) {
   const t = THEMES[theme] ?? THEMES.light;
   const router = useRouter();
+  const { showToast } = useToast();
   const fileInputRef = useRef(null);
   const [activeMaterial, setActiveMaterial] = useState(MATERIALS[0]);
-  const [infill, setInfill] = useState(20);
   const [volumeCm3, setVolumeCm3] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [fileError, setFileError] = useState('');
 
   const quote = volumeCm3
-    ? calculateQuote({ volumeCm3, material: activeMaterial, infill })
+    ? calculateQuote({ volumeCm3, material: activeMaterial })
     : null;
   const estimatedWeight = quote?.estimatedWeight ?? null;
   const totalPrice = quote?.totalCost ?? 0;
@@ -108,6 +111,7 @@ export default function QuoteCalculator({
   const validateFile = (file) => {
     const extension = `.${file.name.split('.').pop()?.toLowerCase()}`;
     if (!ACCEPTED_TYPES.includes(extension)) {
+      showToast('Only STL and OBJ files are supported.', 'error');
       return 'Only STL and OBJ files are supported.';
     }
     if (file.size > MAX_FILE_SIZE) {
@@ -178,7 +182,6 @@ export default function QuoteCalculator({
         fileType: `.${uploadedFile.name.split('.').pop()?.toLowerCase()}`,
         material: { id: activeMaterial.id, name: activeMaterial.name },
         filament: activeMaterial.name,
-        infill,
         volumeCm3,
         weight: estimatedWeight,
         pricePerGram: activeMaterial.costPerGram,
@@ -208,7 +211,9 @@ export default function QuoteCalculator({
             onKeyDown={(e) => e.key === 'Enter' && handleUploadClick()}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
-            className={`h-48 rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all group ${t.upload}`}
+            className={`relative h-[340px] rounded-lg flex flex-col items-center justify-center cursor-pointer transition-all group overflow-hidden ${
+              isAnalyzing ? 'upload-loading-active' : t.upload
+            }`}
           >
             <input
               ref={fileInputRef}
@@ -217,20 +222,33 @@ export default function QuoteCalculator({
               className="hidden"
               onChange={handleFileChange}
             />
-            <span className={`material-symbols-outlined text-4xl mb-sm ${t.uploadIcon}`}>
+            {isAnalyzing && (
+              <>
+                <div className="upload-scan-line" aria-hidden="true" />
+                <div className={`absolute inset-0 flex flex-col items-center justify-center gap-xs backdrop-blur-[1px] ${t.uploadOverlay}`}>
+                  <span className="font-mono text-xs uppercase tracking-[0.2em] text-brand">
+                    {'// MESH_SCAN'}
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted animate-pulse">
+                    Parsing volume
+                  </span>
+                </div>
+              </>
+            )}
+            <span className={`material-symbols-outlined text-4xl mb-sm ${t.uploadIcon} ${isAnalyzing ? 'opacity-30' : ''}`}>
               cloud_upload
             </span>
             {uploadedFile ? (
               <>
-                <span className={`font-mono text-sm text-center break-all px-4 uppercase ${t.uploadFileName}`}>
+                <span className={`font-mono text-sm text-center break-all px-4 uppercase bg-green-500 text-white rounded-sm p-1 ${t.uploadFileName} ${isAnalyzing ? 'opacity-40' : ''}`}>
                   {uploadedFile.name}
                 </span>
-                <span className={`font-mono text-xs mt-xs ${t.uploadHint}`}>
-                  {isAnalyzing ? 'Analyzing mesh volume...' : 'Click or drop to replace file'}
+                <span className={`font-mono text-xs mt-xs ${t.uploadHint} ${isAnalyzing ? 'opacity-0' : ''}`}>
+                  Click or drop to replace file
                 </span>
               </>
             ) : (
-              <span className={`font-mono text-sm uppercase ${t.uploadText}`}>
+              <span className={`font-mono text-sm uppercase ${t.uploadText} ${isAnalyzing ? 'opacity-30' : ''}`}>
                 Drop .STL or .OBJ here
               </span>
             )}
@@ -263,24 +281,6 @@ export default function QuoteCalculator({
               })}
             </div>
           </div>
-
-          <div className="flex flex-col gap-sm">
-            <span className={`font-mono text-xs uppercase tracking-widest ${t.label}`}>
-              {'// INFILL_CONTROL'}
-            </span>
-            <div className="flex items-center gap-md">
-              <input
-                className="grow accent-brand"
-                type="range"
-                min={5}
-                max={100}
-                value={infill}
-                onChange={(e) => setInfill(Number(e.target.value))}
-                disabled={isAnalyzing}
-              />
-              <span className="font-mono text-2xl font-semibold text-brand w-16">{infill}%</span>
-            </div>
-          </div>
         </div>
 
         <div className={`lg:col-span-2 rounded-lg p-md flex flex-col justify-between ${t.panel}`}>
@@ -302,7 +302,7 @@ export default function QuoteCalculator({
             </div>
           </div>
 
-          <div className="mt-xl">
+          <div className="mt-md">
             <span className={`font-mono text-xs block mb-xs uppercase tracking-widest ${t.totalLabel}`}>
               Total Cost
             </span>

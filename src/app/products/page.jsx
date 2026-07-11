@@ -32,9 +32,13 @@ const STAT_BOXES = [
   { label: 'LEAD TIME', value: '1–4 DAYS' },
 ];
 
+const PAGE_SIZE = 20;
+
 export default function ProductsPage() {
   const pageRef = useRef(null);
   const gridRef = useRef(null);
+  const currentPageRef = useRef(1);
+  const scrollAfterPageChangeRef = useRef(false);
   const { tokenReady, session, refreshCart } = useApi();
   const { showToast } = useToast();
 
@@ -46,6 +50,8 @@ export default function ProductsPage() {
   const [viewMode, setViewMode] = useState('grid');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  currentPageRef.current = currentPage;
 
   useEffect(() => {
     async function loadProducts() {
@@ -77,6 +83,29 @@ export default function ProductsPage() {
       (p) => materials.length === 0 || materials.includes(p.material)
     );
   }, [products, materials]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredProducts.slice(start, start + PAGE_SIZE);
+  }, [filteredProducts, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, materials, sort]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    if (!scrollAfterPageChangeRef.current) return;
+    scrollAfterPageChangeRef.current = false;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
   const handleAddToCart = useCallback(
     async (product, quantity = 1) => {
@@ -122,6 +151,13 @@ export default function ProductsPage() {
     setSelectedProduct(null);
   }, []);
 
+  const goToPage = useCallback((page) => {
+    const nextPage = typeof page === 'function' ? page(currentPageRef.current) : page;
+    if (nextPage === currentPageRef.current) return;
+    scrollAfterPageChangeRef.current = true;
+    setCurrentPage(nextPage);
+  }, []);
+
   useGsap((gsap) => {
     gsap.from('.products-hero-label', { y: 20, opacity: 0, duration: 0.6, ease: 'power2.out', delay: 0.1 });
     gsap.from('.products-hero-title', { x: -40, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.2 });
@@ -142,7 +178,7 @@ export default function ProductsPage() {
       fadeFromHidden(gsap, cards);
     };
     run();
-  }, [filteredProducts, viewMode]);
+  }, [paginatedProducts, viewMode]);
 
   const handleViewToggle = (mode) => {
     setViewMode(mode);
@@ -307,7 +343,7 @@ export default function ProductsPage() {
                   Loading products...
                 </p>
               ) : (
-              filteredProducts.map((product) => (
+              paginatedProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -317,6 +353,53 @@ export default function ProductsPage() {
               ))
               )}
             </div>
+
+            {!productsLoading && filteredProducts.length > PAGE_SIZE && (
+              <nav
+                className="mt-10 pt-6 border-t border-outline-variant flex flex-col sm:flex-row items-center justify-between gap-4"
+                aria-label="Product pagination"
+              >
+                <span className="font-mono text-xs uppercase text-secondary tracking-widest">
+                  {`Page ${currentPage} of ${totalPages}`}
+                  <span className="text-on-surface-variant ml-2 normal-case tracking-normal">
+                    ({filteredProducts.length} prints)
+                  </span>
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => goToPage((page) => Math.max(1, page - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 border border-outline-variant bg-surface font-mono text-xs uppercase tracking-widest text-on-background transition-colors hover:bg-surface-variant disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Prev
+                  </button>
+                  {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => goToPage(page)}
+                      aria-current={page === currentPage ? 'page' : undefined}
+                      className={`min-w-9 px-2 py-2 border font-mono text-xs uppercase transition-colors ${
+                        page === currentPage
+                          ? 'border-primary-container bg-primary-container text-on-background'
+                          : 'border-outline-variant bg-surface text-secondary hover:bg-surface-variant hover:text-on-background'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => goToPage((page) => Math.min(totalPages, page + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 border border-outline-variant bg-surface font-mono text-xs uppercase tracking-widest text-on-background transition-colors hover:bg-surface-variant disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </nav>
+            )}
 
             {!productsLoading && filteredProducts.length === 0 && (
               <div className="py-16 text-center">

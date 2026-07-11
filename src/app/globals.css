@@ -186,6 +186,44 @@ section {
   background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%231DB954' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
 }
 
+.upload-loading-active {
+  background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%231DB954' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+  animation: upload-dash-march 0.5s linear infinite;
+}
+
+@keyframes upload-dash-march {
+  to {
+    background-position: 16px 0;
+  }
+}
+
+.upload-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #1DB954 40%, #1DB954 60%, transparent);
+  animation: upload-scan-sweep 0.9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes upload-scan-sweep {
+  0% {
+    top: 12%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    top: 88%;
+    opacity: 0;
+  }
+}
+
 /* Services page — bento grid cells */
 .bento-cell {
   opacity: 0;

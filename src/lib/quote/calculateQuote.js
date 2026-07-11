@@ -62,19 +62,17 @@ export async function parseModelFile(file) {
   return { volumeCm3 };
 }
 
-// Pure pricing math. Given a cached volume, the selected material, and the
-// infill percentage, returns the estimated weight (g) and total cost.
+// Pure pricing math. Given a cached volume and the selected material, returns
+// the estimated (solid) weight in grams and the total cost.
 //
-//   solidWeight = volume(cm³) × density(g/cm³)
-//   actualWeight = solidWeight × (infill / 100)
-//   totalCost    = actualWeight × costPerGram
-export function calculateQuote({ volumeCm3, material, infill }) {
-  const solidWeight = volumeCm3 * material.density;
-  const actualWeight = solidWeight * (infill / 100);
-  const totalCost = actualWeight * material.costPerGram;
+//   weight    = volume(cm³) × density(g/cm³)
+//   totalCost = weight × costPerGram
+export function calculateQuote({ volumeCm3, material }) {
+  const weight = volumeCm3 * material.density;
+  const totalCost = weight * material.costPerGram;
 
   return {
-    estimatedWeight: round2(actualWeight),
+    estimatedWeight: round2(weight),
     totalCost: round2(totalCost),
   };
 }

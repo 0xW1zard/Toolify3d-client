@@ -6,7 +6,11 @@ import { useApi } from '@/components/providers/ApiProvider';
 import { useToast } from '@/components/providers/ToastProvider';
 import { apiFetch, clearAccessToken } from '@/lib/api/client';
 import { authClient } from '@/lib/auth-client';
-import { mapCartItemFromApi, mapOrderForDisplay } from '@/lib/dashboard/mappers';
+import {
+  mapCartItemFromApi,
+  mapOrderForDisplay,
+  mapCustomOrderForDisplay,
+} from '@/lib/dashboard/mappers';
 import { getInitialCustomOrderState } from '@/lib/dashboard/customOrder';
 import { CUSTOM_ORDER_KEY } from '@/components/home/QuoteCalculator';
 import {
@@ -21,6 +25,15 @@ const EMPTY_PROFILE = {
   phone: '',
   address: '',
 };
+
+// Merges regular product orders with custom STL orders into a single history
+// list, most recent first.
+function mergeOrders(ordersData, customData) {
+  return [
+    ...ordersData.map(mapOrderForDisplay),
+    ...customData.map(mapCustomOrderForDisplay),
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
 
 export function useDashboardData() {
   const router = useRouter();
@@ -59,10 +72,16 @@ export function useDashboardData() {
       setLoadError('');
 
       try {
-        const requests = [apiFetch('/profile'), apiFetch('/orders')];
+        const requests = [
+          apiFetch('/profile'),
+          apiFetch('/orders'),
+          apiFetch('/orders/custom'),
+        ];
         if (!customOrderState) requests.push(apiFetch('/cart'));
 
-        const [profileData, ordersData, cartData] = await Promise.all(requests);
+        const [profileData, ordersData, customData, cartData] = await Promise.all(
+          requests
+        );
 
         setProfile({
           imageUrl: profileData.imageUrl || '',
@@ -70,7 +89,7 @@ export function useDashboardData() {
           phone: profileData.phone || '',
           address: profileData.address || '',
         });
-        setOrders(ordersData.map(mapOrderForDisplay));
+        setOrders(mergeOrders(ordersData, customData));
 
         if (!customOrderState) {
           setCartItems((cartData.items || []).map(mapCartItemFromApi));
@@ -181,7 +200,6 @@ export function useDashboardData() {
           fileSize,
           fileType: order.fileType,
           material: order.material,
-          infill: order.infill,
           volumeCm3: order.volumeCm3,
           estimatedWeight: order.weight,
           pricePerGram: order.pricePerGram,
@@ -201,6 +219,12 @@ export function useDashboardData() {
         `Order ${created.orderNumber} placed. Payment on delivery — awaiting confirmation.`,
         'success'
       );
+
+      const [ordersData, customData] = await Promise.all([
+        apiFetch('/orders'),
+        apiFetch('/orders/custom'),
+      ]);
+      setOrders(mergeOrders(ordersData, customData));
     } catch (err) {
       showToast(err.message || 'Checkout failed', 'error');
     } finally {
@@ -244,8 +268,11 @@ export function useDashboardData() {
         `Order ${order.orderNumber} placed. Payment on delivery — awaiting confirmation.`,
         'success'
       );
-      const ordersData = await apiFetch('/orders');
-      setOrders(ordersData.map(mapOrderForDisplay));
+      const [ordersData, customData] = await Promise.all([
+        apiFetch('/orders'),
+        apiFetch('/orders/custom'),
+      ]);
+      setOrders(mergeOrders(ordersData, customData));
       await refreshCart();
     } catch (err) {
       showToast(err.message || 'Checkout failed', 'error');
