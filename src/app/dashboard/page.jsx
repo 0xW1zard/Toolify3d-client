@@ -10,6 +10,7 @@ import ProfileEditModal from '@/components/dashboard/ProfileEditModal';
 import CartSection from '@/components/dashboard/CartSection';
 import OrderHistorySection from '@/components/dashboard/OrderHistorySection';
 import LogoutConfirmModal from '@/components/dashboard/LogoutConfirmModal';
+import ProductModal from '@/components/products/ProductModal';
 
 export default function DashboardPage() {
   const pageRef = useRef(null);
@@ -36,6 +37,11 @@ export default function DashboardPage() {
     handleSaveProfile,
     handleCheckout,
     handleLogout,
+    viewingProduct,
+    loadingProductId,
+    handleViewProduct,
+    closeProductModal,
+    handleAddToCartFromModal,
   } = useDashboardData();
 
   useEffect(() => {
@@ -109,6 +115,8 @@ export default function DashboardPage() {
             onQuantityChange={handleQuantityChange}
             onRemove={handleRemoveCartItem}
             onCheckout={handleCheckout}
+            onViewProduct={handleViewProduct}
+            loadingProductId={loadingProductId}
           />
         </div>
 
@@ -128,6 +136,14 @@ export default function DashboardPage() {
         onConfirm={handleLogout}
         isLoggingOut={isLoggingOut}
       />
+
+      {viewingProduct ? (
+        <ProductModal
+          product={viewingProduct}
+          onClose={closeProductModal}
+          onAddToCart={handleAddToCartFromModal}
+        />
+      ) : null}
     </PageShell>
   );
 }

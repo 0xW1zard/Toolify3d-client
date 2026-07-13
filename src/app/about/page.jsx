@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import PageShell from "@/components/layout/PageShell";
+import WhatsAppLink from "@/components/ui/WhatsAppLink";
 import { useGsap, fadeUpOnScroll, staggerRevealOnScroll } from "@/lib/gsap";
 
 // ── BRAND STORY DATA ──
@@ -534,14 +535,11 @@ export default function AboutPage() {
                       >
                         See Our Products
                       </a>
-                      <a
-                        href="https://wa.me/"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <WhatsAppLink
                         className="border border-[#0D0D0D] text-[#0D0D0D] font-body font-semibold text-xs px-4 py-2 rounded-sm hover:bg-[#0D0D0D] hover:text-white transition-colors"
                       >
                         Message Founder ↗
-                      </a>
+                      </WhatsAppLink>
                     </div>
                   )}
                 </div>
@@ -672,14 +670,11 @@ export default function AboutPage() {
               <h3 className="font-display font-bold text-2xl text-white mt-3">
                 Questions?
               </h3>
-              <a
-                href="https://wa.me/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <WhatsAppLink
                 className="inline-block mt-5 border-2 border-white text-white font-body font-semibold text-sm px-6 py-3 rounded-sm hover:bg-white hover:text-[#0D0D0D] transition-colors duration-150"
               >
                 Message on WhatsApp ↗
-              </a>
+              </WhatsAppLink>
             </div>
           </div>
         </div>

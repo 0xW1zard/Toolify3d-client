@@ -5,6 +5,7 @@ import PageShell from '@/components/layout/PageShell';
 import PageHero from '@/components/ui/PageHero';
 import { useGsap, fadeUpOnMount, fadeUpOnScroll, staggerRevealOnScroll } from '@/lib/gsap';
 import { FaSquareWhatsapp } from "react-icons/fa6";
+import WhatsAppLink from '@/components/ui/WhatsAppLink';
 import { apiFetch } from '@/lib/api/client';
 
 
@@ -227,15 +228,12 @@ export default function ContactPage() {
                 </div>
 
                 <div className="space-y-sm">
-                  <a
-                    href="https://wa.me/"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <WhatsAppLink
                     className="w-full bg-[#25D366] text-white font-bold p-sm flex items-center justify-center gap-sm hover:brightness-110 transition-all active:scale-[0.98]"
                   >
                     <span className="text-2xl"> <FaSquareWhatsapp /></span>
                     CHAT ON WHATSAPP
-                  </a>
+                  </WhatsAppLink>
 
                   <div className="grid grid-cols-2 gap-sm">
                     <div className="p-sm bg-surface-container border border-outline-variant/30">
@@ -334,15 +332,12 @@ export default function ContactPage() {
             <p className="font-body text-lg text-on-surface-variant text-center md:text-left">
               Prefer WhatsApp? Skip the form and message us directly.
             </p>
-            <a
-              href="https://wa.me/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <WhatsAppLink
               className="bg-primary text-white px-10 py-4 font-display font-semibold rounded-sm flex items-center gap-3 btn-hover transition-all"
             >
               Open WhatsApp
               <span className="material-symbols-outlined">north_east</span>
-            </a>
+            </WhatsAppLink>
           </div>
         </section>
       </div>

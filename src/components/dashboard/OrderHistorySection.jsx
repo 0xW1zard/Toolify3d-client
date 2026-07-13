@@ -1,12 +1,15 @@
 import OrderStatusBadge from './OrderStatusBadge';
 
-const ORDER_FILTERS = ['All', 'Processing', 'Shipped'];
-const COLUMNS = ['Order ID', 'Date', 'Items', 'Status', 'Total', 'Action'];
+const ORDER_FILTERS = ['All', 'Active', 'Shipped', 'Rejected'];
+const COLUMNS = ['Order ID', 'Date', 'Items', 'Status', 'Total'];
 
 function matchesFilter(order, filter) {
   if (filter === 'All') return true;
-  if (filter === 'Processing') return order.status === 'Pending' || order.status === 'Processing';
-  if (filter === 'Shipped') return order.status === 'Shipped' || order.status === 'Delivered';
+  if (filter === 'Active') {
+    return ['Pending', 'Printing', 'Packaging'].includes(order.status);
+  }
+  if (filter === 'Shipped') return order.status === 'Shipped';
+  if (filter === 'Rejected') return order.status === 'Rejected';
   return true;
 }
 
@@ -47,7 +50,7 @@ export default function OrderHistorySection({ orders, filter, onFilterChange }) 
                 <th
                   key={col}
                   className={`p-4 font-mono text-sm text-on-surface-variant font-normal uppercase ${
-                    i === 4 ? 'text-right' : i === 5 ? 'text-center' : ''
+                    i === 4 ? 'text-right' : ''
                   }`}
                 >
                   {col}
@@ -58,7 +61,7 @@ export default function OrderHistorySection({ orders, filter, onFilterChange }) 
           <tbody className="font-body divide-y divide-outline-variant/50">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-on-surface-variant">
+                <td colSpan={5} className="p-8 text-center text-on-surface-variant">
                   No orders yet.
                 </td>
               </tr>
@@ -67,20 +70,11 @@ export default function OrderHistorySection({ orders, filter, onFilterChange }) 
                 <tr key={order.id} className="hover:bg-surface transition-colors group">
                   <td className="p-4 font-mono text-[13px]">{order.id}</td>
                   <td className="p-4 text-on-surface-variant">{order.date}</td>
-                  <td className="p-4 truncate max-w-[200px]">{order.items}</td>
+                  <td className="p-4 truncate max-w-[280px]">{order.items}</td>
                   <td className="p-4">
                     <OrderStatusBadge status={order.status} active={order.statusActive} />
                   </td>
                   <td className="p-4 font-mono text-sm text-right">{order.total}</td>
-                  <td className="p-4 text-center">
-                    <button
-                      type="button"
-                      className="p-1 text-on-surface-variant hover:text-primary transition-colors border border-transparent hover:border-primary rounded-sm"
-                      title="View Details"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">visibility</span>
-                    </button>
-                  </td>
                 </tr>
               ))
             )}

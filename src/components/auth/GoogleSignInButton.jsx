@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { authClient } from "@/lib/auth-client";
 
-export default function GoogleSignInButton({ onError }) {
+export default function GoogleSignInButton({ onError, callbackURL = "/complete-profile" }) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
@@ -13,7 +13,7 @@ export default function GoogleSignInButton({ onError }) {
     try {
       const { error } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL,
       });
 
       if (error) {

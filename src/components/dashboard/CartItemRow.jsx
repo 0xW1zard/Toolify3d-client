@@ -1,8 +1,25 @@
-import Link from 'next/link';
 import { formatPrice } from '@/lib/dashboard/mappers';
 
-export default function CartItemRow({ item, onQuantityChange, onRemove }) {
-  const { productId, name, price, image, tags, href, currency, quantity } = item;
+export default function CartItemRow({
+  item,
+  onQuantityChange,
+  onRemove,
+  onViewProduct,
+  loadingProductId,
+}) {
+  const {
+    productId,
+    name,
+    price,
+    image,
+    tags,
+    currency,
+    quantity,
+    customText,
+    color,
+  } = item;
+
+  const isLoadingProduct = loadingProductId === productId;
 
   return (
     <div className="flex gap-4 p-4 border border-outline-variant bg-surface rounded-sm group hover:border-primary transition-colors">
@@ -22,17 +39,45 @@ export default function CartItemRow({ item, onQuantityChange, onRemove }) {
       )}
       <div className="flex flex-col grow justify-between py-1 min-w-0">
         <div className="flex justify-between items-start gap-2">
-          <div className="flex flex-col gap-1 min-w-0">
+          <div className="flex flex-col gap-1.5 min-w-0">
             <span className="font-display text-lg font-semibold text-on-surface truncate">
               {name}
             </span>
-            <Link
-              href={href}
-              className="font-mono text-xs text-primary hover:text-primary-container transition-colors uppercase inline-flex items-center gap-1 w-fit"
-            >
-              View Product
-              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-            </Link>
+            {color?.label || customText ? (
+              <div className="bg-white p-2 rounded-sm border border-outline-variant flex items-center gap-2 flex-wrap">
+                {color?.label ? (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant">
+                    <span
+                      className="inline-block h-5 w-5 shrink-0 rounded-sm border border-outline-variant"
+                      style={{ background: color.hex }}
+                      aria-hidden="true"
+                    />
+                    {color.label}
+                  </span>
+                ) : null}
+                {color?.label && customText ? (
+                  <span className="text-on-surface-variant">|</span>
+                ) : null}
+                {customText ? (
+                  <p className="text-sm italic text-on-surface-variant">
+                    Note: &ldquo;{customText}&rdquo;
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {productId ? (
+              <button
+                type="button"
+                onClick={() => onViewProduct?.(productId)}
+                disabled={Boolean(loadingProductId)}
+                className="font-mono text-xs text-primary hover:text-primary-container transition-colors uppercase inline-flex items-center gap-1 w-fit disabled:opacity-60"
+              >
+                {isLoadingProduct ? 'Loading...' : 'View Product'}
+                {!isLoadingProduct ? (
+                  <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                ) : null}
+              </button>
+            ) : null}
           </div>
           <span className="font-mono text-xl shrink-0">{formatPrice(price, currency)}</span>
         </div>
@@ -50,7 +95,14 @@ export default function CartItemRow({ item, onQuantityChange, onRemove }) {
           <div className="flex items-center border border-outline-variant rounded-sm bg-white h-8">
             <button
               type="button"
-              onClick={() => onQuantityChange(productId, Math.max(1, quantity - 1))}
+              onClick={() =>
+                onQuantityChange(
+                  productId,
+                  Math.max(1, quantity - 1),
+                  customText,
+                  color?.hex
+                )
+              }
               className="px-2 hover:bg-surface-variant hover:text-primary transition-colors"
               aria-label="Decrease quantity"
             >
@@ -61,7 +113,9 @@ export default function CartItemRow({ item, onQuantityChange, onRemove }) {
             </span>
             <button
               type="button"
-              onClick={() => onQuantityChange(productId, quantity + 1)}
+              onClick={() =>
+                onQuantityChange(productId, quantity + 1, customText, color?.hex)
+              }
               className="px-2 hover:bg-surface-variant hover:text-primary transition-colors"
               aria-label="Increase quantity"
             >
@@ -70,7 +124,7 @@ export default function CartItemRow({ item, onQuantityChange, onRemove }) {
           </div>
           <button
             type="button"
-            onClick={() => onRemove(productId)}
+            onClick={() => onRemove(productId, customText, color?.hex)}
             className="text-on-surface-variant hover:text-error transition-colors"
             aria-label="Remove item"
           >

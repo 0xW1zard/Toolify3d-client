@@ -11,6 +11,8 @@ export default function CartSection({
   onQuantityChange,
   onRemove,
   onCheckout,
+  onViewProduct,
+  loadingProductId,
 }) {
   const currency = cartItems[0]?.currency || '৳';
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -50,10 +52,12 @@ export default function CartSection({
             <div className="flex flex-col gap-4">
               {cartItems.map((item) => (
                 <CartItemRow
-                  key={item.productId || 'custom'}
+                  key={`${item.productId || 'custom'}-${item.customText || ''}-${item.color?.hex || ''}`}
                   item={item}
                   onQuantityChange={onQuantityChange}
                   onRemove={onRemove}
+                  onViewProduct={onViewProduct}
+                  loadingProductId={loadingProductId}
                 />
               ))}
             </div>

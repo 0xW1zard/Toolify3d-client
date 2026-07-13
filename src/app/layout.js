@@ -1,4 +1,5 @@
 import { ApiProvider } from "@/components/providers/ApiProvider";
+import { SiteSettingsProvider } from "@/components/providers/SiteSettingsProvider";
 import { ToastProvider } from "@/components/providers/ToastProvider";
 import "./globals.css";
 
@@ -24,7 +25,9 @@ export default function RootLayout({ children }) {
       </head>
       <body className="min-h-screen flex flex-col">
         <ApiProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <SiteSettingsProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </SiteSettingsProvider>
         </ApiProvider>
       </body>
     </html>

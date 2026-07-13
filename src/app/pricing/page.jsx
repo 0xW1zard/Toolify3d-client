@@ -3,34 +3,18 @@
 import Link from 'next/link';
 import PageShell from '@/components/layout/PageShell';
 import QuoteCalculator from '@/components/home/QuoteCalculator';
+import WhatsAppLink from '@/components/ui/WhatsAppLink';
+import { useMaterials } from '@/components/providers/SiteSettingsProvider';
+import { formatWeightEstimate, getDisplayRate } from '@/lib/quote/pricing';
 import { useGsap, fadeUpOnMount, fadeUpOnScroll } from '@/lib/gsap';
 
-const PRICING_ROWS = [
-  {
-    name: 'PLA+',
-    dotClass: 'bg-primary',
-    rate: '৳ 5.00',
-    bestFor: 'Visual prototypes, non-mechanical figurines',
-    est50: '৳ 250',
-    est100: '৳ 500',
-  },
-  {
-    name: 'PETG',
-    dotClass: 'bg-secondary',
-    rate: '৳ 8.00',
-    bestFor: 'Outdoor parts, heat resistance up to 70°C',
-    est50: '৳ 400',
-    est100: '৳ 800',
-  },
-  {
-    name: 'TPU',
-    dotClass: 'bg-orange-500',
-    rate: '৳ 12.00',
-    bestFor: 'Flexible hinges, phone cases, gaskets',
-    est50: '৳ 600',
-    est100: '৳ 1200',
-  },
-];
+const DOT_CLASSES = ['bg-primary', 'bg-secondary', 'bg-orange-500'];
+
+const BEST_FOR = {
+  PLA: 'Visual prototypes, non-mechanical figurines',
+  PETG: 'Outdoor parts, heat resistance up to 70°C',
+  TPU: 'Flexible hinges, phone cases, gaskets',
+};
 
 const STEPS = [
   {
@@ -78,6 +62,8 @@ const DESIGN_FEATURES = [
 ];
 
 export default function PricingPage() {
+  const { materials, discountsEnabled, weightBreakpointsG } = useMaterials();
+
   useGsap((gsap) => {
     fadeUpOnMount(gsap, '.pricing-hero-reveal', { y: 30 });
     fadeUpOnScroll(gsap, '.reveal-on-scroll');
@@ -128,20 +114,26 @@ export default function PricingPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant">
-                  {PRICING_ROWS.map((row) => (
-                    <tr key={row.name} className="hover:bg-surface-container-low transition-colors">
-                      <td className="p-md">
-                        <div className="flex items-center gap-sm">
-                          <div className={`w-3 h-3 ${row.dotClass} rounded-full`} />
-                          <span className="font-bold">{row.name}</span>
-                        </div>
-                      </td>
-                      <td className="p-md font-mono">{row.rate}</td>
-                      <td className="p-md text-secondary">{row.bestFor}</td>
-                      <td className="p-md font-mono">{row.est50}</td>
-                      <td className="p-md font-mono">{row.est100}</td>
-                    </tr>
-                  ))}
+                  {materials.map((material, index) => {
+                    const rate = getDisplayRate(material, weightBreakpointsG, 50);
+                    const est50 = formatWeightEstimate(50, material, discountsEnabled, weightBreakpointsG);
+                    const est100 = formatWeightEstimate(100, material, discountsEnabled, weightBreakpointsG);
+
+                    return (
+                      <tr key={material.id} className="hover:bg-surface-container-low transition-colors">
+                        <td className="p-md">
+                          <div className="flex items-center gap-sm">
+                            <div className={`w-3 h-3 ${DOT_CLASSES[index % DOT_CLASSES.length]} rounded-full`} />
+                            <span className="font-bold">{material.name}</span>
+                          </div>
+                        </td>
+                        <td className="p-md font-mono">৳ {rate.toFixed(2)}</td>
+                        <td className="p-md text-secondary">{BEST_FOR[material.id] || material.tag}</td>
+                        <td className="p-md font-mono">৳ {est50 ?? '--'}</td>
+                        <td className="p-md font-mono">৳ {est100 ?? '--'}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -271,15 +263,13 @@ export default function PricingPage() {
               </span>
             </div>
             <div className="flex flex-wrap justify-center gap-sm">
-              <a
-                href="https://wa.me/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <WhatsAppLink
+                message="Hi, I'd like to send my STL file for a quote."
                 className="bg-[#25D366] text-white px-md py-sm font-bold uppercase flex items-center gap-xs rounded hover:brightness-105 transition-all"
               >
                 <span className="material-symbols-outlined">chat</span>
                 Send File on WhatsApp
-              </a>
+              </WhatsAppLink>
               <Link
                 href="/services"
                 className="border border-outline px-md py-sm font-bold uppercase flex items-center gap-xs rounded hover:bg-surface-container transition-all"

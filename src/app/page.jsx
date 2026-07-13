@@ -4,6 +4,7 @@ import PageShell from '@/components/layout/PageShell';
 import Section from '@/components/layout/Section';
 import CTABanner from '@/components/ui/CTABanner';
 import Button from '@/components/ui/Button';
+import { useSiteSettings } from '@/components/providers/SiteSettingsProvider';
 import HeroSection from '@/components/home/HeroSection';
 import StatsBar from '@/components/home/StatsBar';
 import QuoteCalculator from '@/components/home/QuoteCalculator';
@@ -15,6 +16,8 @@ import MarqueeTicker from '@/components/home/MarqueeTicker';
 import { useGsap, fadeUpOnMount, fadeUpOnScroll, galleryScrub } from '@/lib/gsap';
 
 export default function Home() {
+  const { getWhatsAppUrl } = useSiteSettings();
+
   useGsap((gsap) => {
     fadeUpOnMount(gsap, '.reveal-hero', { y: 20 });
     gsap.from('.cube-wireframe', {
@@ -42,7 +45,7 @@ export default function Home() {
           title="Order Your Print Today"
           description="Expert assistance available for custom projects."
         >
-          <Button href="https://wa.me/" external>
+          <Button href={getWhatsAppUrl() || 'https://wa.me/'} external>
             <span className="material-symbols-outlined">chat</span>
             WhatsApp
           </Button>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import PageShell from '@/components/layout/PageShell';
 import ProductCard from '@/components/products/ProductCard';
 import ProductModal from '@/components/products/ProductModal';
+import WhatsAppLink from '@/components/ui/WhatsAppLink';
 import {
   useGsap,
   loadGsap,
@@ -108,7 +109,7 @@ export default function ProductsPage() {
   }, [currentPage]);
 
   const handleAddToCart = useCallback(
-    async (product, quantity = 1) => {
+    async (product, quantity = 1, customText = '', selectedColor = null) => {
       if (!session?.user) {
         showToast('Please log in to add items to your cart.', 'error');
         return false;
@@ -120,9 +121,18 @@ export default function ProductsPage() {
       }
 
       try {
+        const body = { productId: product.id, quantity };
+        if (customText) {
+          body.customText = customText;
+        }
+        if (selectedColor?.hex) {
+          body.colorHex = selectedColor.hex;
+          body.colorLabel = selectedColor.label;
+        }
+
         await apiFetch('/cart/items', {
           method: 'POST',
-          body: JSON.stringify({ productId: product.id, quantity }),
+          body: JSON.stringify(body),
         });
         await refreshCart();
         showToast(`${product.name} added to cart.`, 'success');
@@ -435,15 +445,12 @@ export default function ProductsPage() {
                 <span className="material-symbols-outlined text-[20px]">upload_file</span>
                 Upload Your File
               </Link>
-              <a
-                href="https://wa.me/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <WhatsAppLink
                 className="bg-surface border border-outline-variant text-on-background font-mono text-sm py-3 px-6 rounded-none transition-colors duration-200 hover:bg-surface-variant flex items-center justify-center gap-2 uppercase"
               >
                 <span className="material-symbols-outlined text-[20px]">chat</span>
                 Chat on WhatsApp
-              </a>
+              </WhatsAppLink>
             </div>
           </div>
         </section>

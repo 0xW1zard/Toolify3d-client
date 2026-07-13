@@ -15,6 +15,14 @@ function CategoryBadge({ category }) {
   );
 }
 
+function getProductThumbnail(product) {
+  const firstColor = product.colors?.[0];
+  if (firstColor && typeof firstColor === 'object' && firstColor.image) {
+    return firstColor.image;
+  }
+  return product.image || product.images?.[0] || '';
+}
+
 export default function ProductCard({ product, viewMode, onOpen }) {
   return (
     <div
@@ -39,7 +47,7 @@ export default function ProductCard({ product, viewMode, onOpen }) {
         <div
           className="w-full h-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
           style={{
-            backgroundImage: `url('${product.image || product.images?.[0] || ''}')`,
+            backgroundImage: `url('${getProductThumbnail(product)}')`,
           }}
         />
         <div className="absolute top-2 left-2 flex flex-col gap-1">

@@ -30,16 +30,37 @@ function formatDate(value) {
   });
 }
 
+function normalizeColorEntry(entry, fallbackImage = '') {
+  if (typeof entry === 'string') {
+    const hex = entry.trim().toLowerCase();
+    return {
+      hex,
+      label: COLOR_LABELS[hex] || hex,
+      image: fallbackImage,
+    };
+  }
+
+  if (!entry || typeof entry !== 'object') return null;
+
+  const hex = String(entry.hex || '').trim().toLowerCase();
+  if (!hex) return null;
+
+  return {
+    hex,
+    label: String(entry.label || COLOR_LABELS[hex] || hex).trim(),
+    image: typeof entry.image === 'string' && entry.image.trim() ? entry.image.trim() : fallbackImage,
+  };
+}
+
 function normalizeProduct(product) {
   const apiImages = Array.isArray(product.images) ? product.images : [];
   const images = (apiImages.length ? apiImages : [product.image, product.modalImage]).filter(
     (img, i, arr) => img && arr.indexOf(img) === i
   );
-
-  const colors = (product.colors || []).map((hex) => ({
-    label: COLOR_LABELS[hex.toLowerCase()] || hex,
-    hex,
-  }));
+  const fallbackImage = images[0] || product.image || '';
+  const colors = (product.colors || [])
+    .map((entry) => normalizeColorEntry(entry, fallbackImage))
+    .filter(Boolean);
 
   return {
     id: product.id,
@@ -51,7 +72,7 @@ function normalizeProduct(product) {
       product.description ||
       `Precision 3D printed ${product.name.toLowerCase()}. ${product.specs}. Optimised for reliable FDM output with clean surface finish.`,
     images: images.length ? images : [product.image].filter(Boolean),
-    colors: colors.length ? colors : [{ label: 'Default', hex: '#1db954' }],
+    colors: colors.length ? colors : [{ label: 'Default', hex: '#1db954', image: fallbackImage }],
     availableMaterials: product.availableMaterials || [product.material],
     pricePerUnit: product.price,
     weightLabel: product.weight,
@@ -67,6 +88,18 @@ function normalizeProduct(product) {
   };
 }
 
+function buildDisplayImages(colors, galleryImages) {
+  const urls = [
+    ...colors.map((color) => color.image).filter(Boolean),
+    ...galleryImages.filter(Boolean),
+  ];
+  return urls.filter((url, index, arr) => arr.indexOf(url) === index);
+}
+
+function findColorByImage(colors, url) {
+  return colors.find((color) => color.image === url) ?? null;
+}
+
 function SectionLabel({ icon, children }) {
   return (
     <h4 className="font-mono text-sm text-on-surface-variant flex items-center gap-2 uppercase tracking-wide">
@@ -80,6 +113,7 @@ function SectionLabel({ icon, children }) {
 
 export default function ProductModal({ product: rawProduct, onClose, onAddToCart }) {
   const product = normalizeProduct(rawProduct);
+  const displayImages = buildDisplayImages(product.colors, product.images);
   const { showToast } = useToast();
   const panelRef = useRef(null);
   const backdropRef = useRef(null);
@@ -125,7 +159,7 @@ export default function ProductModal({ product: rawProduct, onClose, onAddToCart
     }
 
     setIsAdding(true);
-    const added = await onAddToCart(rawProduct, qty);
+    const added = await onAddToCart(rawProduct, qty, customText.trim(), selectedColor);
     setIsAdding(false);
 
     if (added) onClose();
@@ -225,13 +259,17 @@ export default function ProductModal({ product: rawProduct, onClose, onAddToCart
         <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
           <section className="md:w-[45%] shrink-0 p-4 md:p-6 md:border-r border-outline-variant bg-surface-container-lowest">
             <div className="flex gap-4 h-full">
-              {product.images.length > 1 && (
+              {displayImages.length > 1 && (
                 <div className="flex flex-col gap-2 w-16 md:w-20 shrink-0">
-                  {product.images.map((img, i) => (
+                  {displayImages.map((img, i) => (
                     <button
                       key={i}
                       type="button"
-                      onClick={() => setActiveImg(i)}
+                      onClick={() => {
+                        setActiveImg(i);
+                        const matchedColor = findColorByImage(product.colors, img);
+                        if (matchedColor) setSelectedColor(matchedColor);
+                      }}
                       className={`w-full aspect-square border rounded transition-colors overflow-hidden ${
                         activeImg === i
                           ? 'border-primary-container border-2'
@@ -252,7 +290,7 @@ export default function ProductModal({ product: rawProduct, onClose, onAddToCart
                 <div
                   className="absolute inset-0 bg-cover bg-center transition-transform duration-500 hover:scale-105"
                   style={{
-                    backgroundImage: `url('${product.images[activeImg] || product.images[0]}')`,
+                    backgroundImage: `url('${displayImages[activeImg] || selectedColor.image || displayImages[0] || ''}')`,
                   }}
                 />
                 <span className="absolute top-2 right-2 bg-on-background text-white font-mono text-[10px] px-2 py-1 rounded-sm tracking-wider uppercase">
@@ -319,7 +357,11 @@ export default function ProductModal({ product: rawProduct, onClose, onAddToCart
                     <button
                       key={color.hex}
                       type="button"
-                      onClick={() => setSelectedColor(color)}
+                      onClick={() => {
+                        setSelectedColor(color);
+                        const idx = displayImages.indexOf(color.image);
+                        setActiveImg(idx >= 0 ? idx : 0);
+                      }}
                       title={color.label}
                       aria-label={color.label}
                       aria-pressed={isSelected}

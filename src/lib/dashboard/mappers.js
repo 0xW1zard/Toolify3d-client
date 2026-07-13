@@ -1,5 +1,28 @@
 const CURRENCY = '৳';
 
+const STATUS_LABELS = {
+  pending: 'Pending',
+  'in-progress': 'Printing',
+  in_progress: 'Printing',
+  processing: 'Printing',
+  packaging: 'Packaging',
+  shipped: 'Shipped',
+  done: 'Shipped',
+  completed: 'Shipped',
+  rejected: 'Rejected',
+};
+
+const ACTIVE_STATUSES = new Set(['pending', 'in-progress', 'in_progress', 'processing', 'packaging']);
+
+export function formatOrderStatusLabel(status) {
+  if (!status) return 'Pending';
+  return STATUS_LABELS[status] || status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+export function isActiveOrderStatus(status) {
+  return ACTIVE_STATUSES.has(status);
+}
+
 export function mapCartItemFromApi(item) {
   return {
     name: item.name,
@@ -10,11 +33,23 @@ export function mapCartItemFromApi(item) {
     currency: CURRENCY,
     productId: item.productId,
     quantity: item.quantity,
+    customText: item.customText || '',
+    color: item.color || null,
   };
 }
 
-function formatOrderStatus(status) {
-  return status.charAt(0).toUpperCase() + status.slice(1);
+function formatOrderItemSummary(item) {
+  const base = `${item.quantity}x ${item.name}`;
+  const details = [];
+
+  if (item.color?.label) {
+    details.push(item.color.label);
+  }
+  if (item.customText) {
+    details.push(`"${item.customText}"`);
+  }
+
+  return details.length ? `${base} — ${details.join(', ')}` : base;
 }
 
 function formatOrderDate(value) {
@@ -26,16 +61,15 @@ function formatOrderDate(value) {
 }
 
 export function mapOrderForDisplay(order) {
-  const itemsSummary = order.items
-    .map((item) => `${item.quantity}x ${item.name}`)
-    .join(', ');
+  const itemsSummary = order.items.map(formatOrderItemSummary).join(', ');
 
   return {
     id: order.orderNumber,
     date: formatOrderDate(order.createdAt),
     items: itemsSummary,
-    status: formatOrderStatus(order.status),
-    statusActive: ['pending', 'processing'].includes(order.status),
+    status: formatOrderStatusLabel(order.status),
+    rawStatus: order.status,
+    statusActive: isActiveOrderStatus(order.status),
     total: `${CURRENCY}${order.subtotal.toFixed(2)}`,
     createdAt: order.createdAt,
   };
@@ -48,8 +82,9 @@ export function mapCustomOrderForDisplay(order) {
     id: order.orderNumber,
     date: formatOrderDate(order.createdAt),
     items: `Custom print — ${order.fileName}${materialName}`,
-    status: formatOrderStatus(order.status),
-    statusActive: ['pending', 'processing'].includes(order.status),
+    status: formatOrderStatusLabel(order.status),
+    rawStatus: order.status,
+    statusActive: isActiveOrderStatus(order.status),
     total: `${CURRENCY}${(order.totalCost ?? 0).toFixed(2)}`,
     isCustom: true,
     fileUrl: order.fileUrl,

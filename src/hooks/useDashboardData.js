@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useApi } from '@/components/providers/ApiProvider';
 import { useToast } from '@/components/providers/ToastProvider';
 import { apiFetch, clearAccessToken } from '@/lib/api/client';
 import { authClient } from '@/lib/auth-client';
+import { hasPhoneNumber } from '@/lib/auth/phone';
 import {
   mapCartItemFromApi,
   mapOrderForDisplay,
@@ -35,8 +36,25 @@ function mergeOrders(ordersData, customData) {
   ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
+function matchesCartItem(item, productId, customText = '', colorHex = '') {
+  return (
+    item.productId === productId &&
+    (item.customText || '') === (customText || '') &&
+    (item.color?.hex || '').toLowerCase() === (colorHex || '').toLowerCase()
+  );
+}
+
+function buildCartItemQuery(customText = '', colorHex = '') {
+  const params = new URLSearchParams();
+  if (customText) params.set('customText', customText);
+  if (colorHex) params.set('colorHex', colorHex);
+  const query = params.toString();
+  return query ? `?${query}` : '';
+}
+
 export function useDashboardData() {
   const router = useRouter();
+  const pathname = usePathname();
   const { session, isPending, tokenReady, refreshCart } = useApi();
   const { showToast } = useToast();
   const [customOrderState] = useState(getInitialCustomOrderState);
@@ -52,6 +70,8 @@ export function useDashboardData() {
   const [orderNotice] = useState(customOrderState?.orderNotice ?? '');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [loadingProductId, setLoadingProductId] = useState('');
 
   const displayProfile = {
     ...profile,
@@ -83,6 +103,13 @@ export function useDashboardData() {
           requests
         );
 
+        if (!hasPhoneNumber(session, profileData)) {
+          router.replace(
+            `/complete-profile?next=${encodeURIComponent(pathname || '/dashboard')}`
+          );
+          return;
+        }
+
         setProfile({
           imageUrl: profileData.imageUrl || '',
           name: profileData.name || '',
@@ -104,22 +131,32 @@ export function useDashboardData() {
     }
 
     loadDashboardData();
-  }, [tokenReady, customOrderState, refreshCart]);
+  }, [tokenReady, customOrderState, refreshCart, session, router, pathname]);
 
   const handleQuantityChange = useCallback(
-    async (productId, nextQuantity) => {
+    async (productId, nextQuantity, customText = '', colorHex = '') => {
       setCartItems((prev) =>
         prev.map((item) =>
-          item.productId === productId ? { ...item, quantity: nextQuantity } : item
+          matchesCartItem(item, productId, customText, colorHex)
+            ? { ...item, quantity: nextQuantity }
+            : item
         )
       );
 
       if (!productId || isCustomOrder) return;
 
       try {
+        const body = { quantity: nextQuantity };
+        if (customText) {
+          body.customText = customText;
+        }
+        if (colorHex) {
+          body.colorHex = colorHex;
+        }
+
         await apiFetch(`/cart/items/${productId}`, {
           method: 'PATCH',
-          body: JSON.stringify({ quantity: nextQuantity }),
+          body: JSON.stringify(body),
         });
         await refreshCart();
       } catch (err) {
@@ -130,13 +167,18 @@ export function useDashboardData() {
   );
 
   const handleRemoveCartItem = useCallback(
-    async (productId) => {
-      setCartItems((prev) => prev.filter((item) => item.productId !== productId));
+    async (productId, customText = '', colorHex = '') => {
+      setCartItems((prev) =>
+        prev.filter((item) => !matchesCartItem(item, productId, customText, colorHex))
+      );
 
       if (!productId || isCustomOrder) return;
 
       try {
-        await apiFetch(`/cart/items/${productId}`, { method: 'DELETE' });
+        await apiFetch(
+          `/cart/items/${productId}${buildCartItemQuery(customText, colorHex)}`,
+          { method: 'DELETE' }
+        );
         await refreshCart();
       } catch (err) {
         console.error('Failed to remove cart item:', err);
@@ -259,7 +301,6 @@ export function useDashboardData() {
             phone: displayProfile.phone,
             address: displayProfile.address,
           },
-          notes: 'COD checkout',
         }),
       });
 
@@ -280,6 +321,76 @@ export function useDashboardData() {
       setIsCheckingOut(false);
     }
   }, [cartItems, isCustomOrder, handleCustomCheckout, displayProfile, refreshCart, showToast]);
+
+  const reloadCartItems = useCallback(async () => {
+    if (isCustomOrder) return;
+
+    try {
+      const cartData = await apiFetch('/cart');
+      setCartItems((cartData.items || []).map(mapCartItemFromApi));
+      await refreshCart();
+    } catch (err) {
+      console.error('Failed to reload cart:', err);
+    }
+  }, [isCustomOrder, refreshCart]);
+
+  const handleViewProduct = useCallback(
+    async (productId) => {
+      if (!productId) return;
+
+      setLoadingProductId(productId);
+      try {
+        const product = await apiFetch(`/products/${productId}`);
+        setViewingProduct(product);
+      } catch (err) {
+        showToast(err.message || 'Failed to load product', 'error');
+      } finally {
+        setLoadingProductId('');
+      }
+    },
+    [showToast]
+  );
+
+  const closeProductModal = useCallback(() => {
+    setViewingProduct(null);
+  }, []);
+
+  const handleAddToCartFromModal = useCallback(
+    async (product, quantity = 1, customText = '', selectedColor = null) => {
+      if (!session?.user) {
+        showToast('Please log in to add items to your cart.', 'error');
+        return false;
+      }
+
+      if (!tokenReady) {
+        showToast('Preparing your session. Try again in a moment.', 'error');
+        return false;
+      }
+
+      try {
+        const body = { productId: product.id, quantity };
+        if (customText) {
+          body.customText = customText;
+        }
+        if (selectedColor?.hex) {
+          body.colorHex = selectedColor.hex;
+          body.colorLabel = selectedColor.label;
+        }
+
+        await apiFetch('/cart/items', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+        await reloadCartItems();
+        showToast(`${product.name} added to cart.`, 'success');
+        return true;
+      } catch (err) {
+        showToast(err.message || 'Failed to add to cart.', 'error');
+        return false;
+      }
+    },
+    [session, tokenReady, reloadCartItems, showToast]
+  );
 
   const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
@@ -319,5 +430,10 @@ export function useDashboardData() {
     handleSaveProfile,
     handleCheckout,
     handleLogout,
+    viewingProduct,
+    loadingProductId,
+    handleViewProduct,
+    closeProductModal,
+    handleAddToCartFromModal,
   };
 }

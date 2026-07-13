@@ -1,10 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Section from '@/components/layout/Section';
 import SectionHeader from '@/components/ui/SectionHeader';
-import { QUOTE_MATERIALS } from '@/lib/quote/materials';
+import { useMaterials } from '@/components/providers/SiteSettingsProvider';
 import { parseModelFile, calculateQuote } from '@/lib/quote/calculateQuote';
 import {
   saveCustomOrderFile,
@@ -13,8 +13,6 @@ import {
 import { useToast } from '@/components/providers/ToastProvider';
 
 export const CUSTOM_ORDER_KEY = 'toolify_custom_order';
-
-const MATERIALS = QUOTE_MATERIALS;
 
 const ACCEPTED_TYPES = ['.stl', '.obj'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -94,15 +92,27 @@ export default function QuoteCalculator({
   const t = THEMES[theme] ?? THEMES.light;
   const router = useRouter();
   const { showToast } = useToast();
+  const { materials, discountsEnabled, weightBreakpointsG, loading: materialsLoading } = useMaterials();
   const fileInputRef = useRef(null);
-  const [activeMaterial, setActiveMaterial] = useState(MATERIALS[0]);
+  const [activeMaterial, setActiveMaterial] = useState(null);
   const [volumeCm3, setVolumeCm3] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [fileError, setFileError] = useState('');
 
-  const quote = volumeCm3
-    ? calculateQuote({ volumeCm3, material: activeMaterial })
+  useEffect(() => {
+    if (materials.length && !activeMaterial) {
+      setActiveMaterial(materials[0]);
+    }
+  }, [materials, activeMaterial]);
+
+  const quote = volumeCm3 && activeMaterial
+    ? calculateQuote({
+        volumeCm3,
+        material: activeMaterial,
+        discountsEnabled,
+        weightBreakpointsG,
+      })
     : null;
   const estimatedWeight = quote?.estimatedWeight ?? null;
   const totalPrice = quote?.totalCost ?? 0;
@@ -180,11 +190,11 @@ export default function QuoteCalculator({
         fileName: uploadedFile.name,
         fileSize: uploadedFile.size,
         fileType: `.${uploadedFile.name.split('.').pop()?.toLowerCase()}`,
-        material: { id: activeMaterial.id, name: activeMaterial.name },
-        filament: activeMaterial.name,
+        material: { id: activeMaterial.id, name: activeMaterial.fullName || activeMaterial.name },
+        filament: activeMaterial.fullName || activeMaterial.name,
         volumeCm3,
         weight: estimatedWeight,
-        pricePerGram: activeMaterial.costPerGram,
+        pricePerGram: quote?.pricePerGram ?? activeMaterial.costPerGram,
         total: totalPrice,
         placedAt: Date.now(),
       })
@@ -263,13 +273,14 @@ export default function QuoteCalculator({
               {'// MATERIAL_SELECT'}
             </span>
             <div className="grid grid-cols-3 gap-xs">
-              {MATERIALS.map((mat) => {
-                const isActive = activeMaterial.id === mat.id;
+              {materials.map((mat) => {
+                const isActive = activeMaterial?.id === mat.id;
                 return (
                   <button
                     key={mat.id}
                     type="button"
                     onClick={() => setActiveMaterial(mat)}
+                    disabled={materialsLoading}
                     className={`p-sm rounded-lg flex flex-col items-center transition-all ${
                       isActive ? t.matActive : t.matInactive
                     }`}
@@ -294,7 +305,7 @@ export default function QuoteCalculator({
             </div>
             <div className={`flex justify-between border-b py-sm ${t.divider}`}>
               <span className={t.rowLabel}>Selected Material</span>
-              <span className={`font-mono ${t.rowValue}`}>{activeMaterial.name}</span>
+              <span className={`font-mono ${t.rowValue}`}>{activeMaterial?.name ?? '--'}</span>
             </div>
             <div className={`flex justify-between border-b py-sm ${t.divider}`}>
               <span className={t.rowLabel}>Print Duration</span>
@@ -311,11 +322,16 @@ export default function QuoteCalculator({
               <span className={`font-display font-extrabold text-5xl ${t.totalAmount}`}>
                 {isAnalyzing ? '...' : totalPrice}
               </span>
+              {quote?.discountApplied && quote.regularTotal > totalPrice && (
+                <span className={`font-mono text-sm line-through ${t.rowLabel}`}>
+                  ৳{quote.regularTotal}
+                </span>
+              )}
             </div>
             <button
               type="button"
               onClick={handlePlaceOrder}
-              disabled={isAnalyzing}
+              disabled={isAnalyzing || materialsLoading || !activeMaterial}
               className="w-full bg-brand text-white py-sm mt-md font-bold uppercase rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-xs disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span>{checkoutLabel}</span>
