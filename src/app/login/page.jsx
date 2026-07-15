@@ -1,16 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthPageLayout from "@/components/auth/AuthPageLayout";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { useToast } from "@/components/providers/ToastProvider";
 import { authClient } from "@/lib/auth-client";
+import {
+  getSafeNextPath,
+  googleCallbackPath,
+  registerPath,
+} from "@/lib/auth-redirect";
+import {
+  emailAccountExists,
+  isInvalidCredentialsError,
+} from "@/lib/auth-errors";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
+
+  const nextPath = getSafeNextPath(searchParams.get("next"));
+  const googleCallback = googleCallbackPath(nextPath);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,12 +41,24 @@ export default function LoginPage() {
       });
 
       if (error) {
+        if (isInvalidCredentialsError(error)) {
+          const exists = await emailAccountExists(email);
+          if (exists === false) {
+            showToast(
+              "No account found with this email. Create one to continue.",
+              "error"
+            );
+            router.push(registerPath(nextPath));
+            return;
+          }
+        }
+
         showToast(error.message || "Authentication failed.", "error");
         return;
       }
 
       showToast("Authentication success. Redirecting to Terminal...", "success");
-      window.setTimeout(() => router.push("/"), 1500);
+      window.setTimeout(() => router.push(nextPath), 1500);
     } catch {
       showToast("Something went wrong. Please try again.", "error");
     } finally {
@@ -145,7 +170,7 @@ export default function LoginPage() {
             <p className="font-body text-secondary">
               Don&apos;t have an account?{" "}
               <Link
-                href="/register"
+                href={registerPath(nextPath)}
                 className="text-on-surface font-bold hover:text-brand transition-colors group"
               >
                 Create Account{" "}
@@ -154,9 +179,31 @@ export default function LoginPage() {
                 </span>
               </Link>
             </p>
-            <GoogleSignInButton onError={(message) => showToast(message, "error")} />
+            <GoogleSignInButton
+              callbackURL={googleCallback}
+              onError={(message) => showToast(message, "error")}
+            />
           </div>
         </div>
     </AuthPageLayout>
+  );
+}
+
+function LoginLoading() {
+  return (
+    <AuthPageLayout footerLeft="System Ready: 200 OK" footerRight="Auth_Service_v1.4.2">
+      <div className="bg-white text-dark p-10 rounded-sm shadow-2xl border border-border text-center">
+        <p className="font-mono text-sm text-brand tracking-wide">{"// LOADING"}</p>
+        <p className="font-body text-secondary mt-2">One moment...</p>
+      </div>
+    </AuthPageLayout>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginLoading />}>
+      <LoginForm />
+    </Suspense>
   );
 }

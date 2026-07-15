@@ -6,7 +6,6 @@ import CTABanner from '@/components/ui/CTABanner';
 import Button from '@/components/ui/Button';
 import { useSiteSettings } from '@/components/providers/SiteSettingsProvider';
 import HeroSection from '@/components/home/HeroSection';
-import StatsBar from '@/components/home/StatsBar';
 import QuoteCalculator from '@/components/home/QuoteCalculator';
 import ServiceGrid from '@/components/home/ServiceGrid';
 import ProcessTimeline from '@/components/home/ProcessTimeline';
@@ -20,12 +19,6 @@ export default function Home() {
 
   useGsap((gsap) => {
     fadeUpOnMount(gsap, '.reveal-hero', { y: 20 });
-    gsap.from('.cube-wireframe', {
-      scale: 0.5,
-      opacity: 0,
-      duration: 1.2,
-      ease: 'power2.out',
-    });
     fadeUpOnScroll(gsap, '.reveal-on-scroll', { start: 'top 80%' });
     galleryScrub(gsap, '.animate-gallery');
   }, []);
@@ -33,8 +26,9 @@ export default function Home() {
   return (
     <PageShell>
       <HeroSection />
-      <StatsBar />
-      <QuoteCalculator theme="light" />
+      <div id="quote-calculator">
+        <QuoteCalculator theme="light" />
+      </div>
       <ServiceGrid />
       <ProcessTimeline />
       <MaterialGrid />

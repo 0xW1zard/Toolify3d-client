@@ -2,23 +2,25 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import PageShell from '@/components/layout/PageShell';
 import QuoteCalculator from '@/components/home/QuoteCalculator';
 import { useGsap } from '@/lib/gsap';
 import { useApi } from '@/components/providers/ApiProvider';
+import { loginPath } from '@/lib/auth-redirect';
 
 export default function CustomProjectPage() {
   const pageRef = useRef(null);
   const router = useRouter();
+  const pathname = usePathname();
   const { session, isPending } = useApi();
 
   useEffect(() => {
     if (isPending) return;
     if (!session?.user) {
-      router.replace('/login');
+      router.replace(loginPath(pathname || '/dashboard/custom'));
     }
-  }, [isPending, session, router]);
+  }, [isPending, session, router, pathname]);
 
   useGsap(
     (gsap) => {

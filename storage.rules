@@ -1,24 +1,18 @@
 rules_version = '2';
 
 // Firebase Storage rules for Toolify 3D custom print orders.
-//
-// NOTE (production hardening required): this app authenticates users with
-// Better Auth, not Firebase Auth, so `request.auth` is not populated during
-// uploads. These rules therefore allow unauthenticated writes scoped to the
-// custom-orders path with a size/type guard. Before production, add a Firebase
-// custom-token bridge (issue a token from the Express API for the logged-in
-// Better Auth user) and replace the `allow` conditions with
-// `request.auth != null && request.auth.uid == userId`.
+// Users authenticate via a Firebase custom token issued by the Express API
+// (Better Auth session → JWT → GET /api/v1/auth/firebase-token).
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Uploaded STL/OBJ models for custom quote orders.
     match /custom-orders/{userId}/{allPaths=**} {
-      allow read: if true;
-      allow write: if request.resource.size < 50 * 1024 * 1024;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 50 * 1024 * 1024;
     }
 
-    // Deny everything else by default.
     match /{allPaths=**} {
       allow read, write: if false;
     }

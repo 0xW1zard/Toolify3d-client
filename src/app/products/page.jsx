@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import PageShell from '@/components/layout/PageShell';
 import ProductCard from '@/components/products/ProductCard';
 import ProductModal from '@/components/products/ProductModal';
@@ -16,6 +17,7 @@ import {
 import { apiFetch } from '@/lib/api/client';
 import { useApi } from '@/components/providers/ApiProvider';
 import { useToast } from '@/components/providers/ToastProvider';
+import { loginPath } from '@/lib/auth-redirect';
 
 const CATEGORIES = ['ALL', 'HOBBY', 'FUNCTIONAL', 'CUSTOM', 'COSPLAY', 'MINIATURES'];
 const MATERIAL_FILTERS = ['PLA+', 'PETG', 'TPU'];
@@ -27,12 +29,6 @@ const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest' },
 ];
 
-const STAT_BOXES = [
-  { label: 'CATALOG', value: '50+ PRINTS' },
-  { label: 'OPTIONS', value: '3 MATERIALS' },
-  { label: 'LEAD TIME', value: '1–4 DAYS' },
-];
-
 const PAGE_SIZE = 20;
 
 export default function ProductsPage() {
@@ -40,6 +36,8 @@ export default function ProductsPage() {
   const gridRef = useRef(null);
   const currentPageRef = useRef(1);
   const scrollAfterPageChangeRef = useRef(false);
+  const router = useRouter();
+  const pathname = usePathname();
   const { tokenReady, session, refreshCart } = useApi();
   const { showToast } = useToast();
 
@@ -112,6 +110,7 @@ export default function ProductsPage() {
     async (product, quantity = 1, customText = '', selectedColor = null) => {
       if (!session?.user) {
         showToast('Please log in to add items to your cart.', 'error');
+        router.push(loginPath(pathname || '/products'));
         return false;
       }
 
@@ -142,7 +141,7 @@ export default function ProductsPage() {
         return false;
       }
     },
-    [session, tokenReady, refreshCart, showToast]
+    [session, tokenReady, refreshCart, showToast, router, pathname]
   );
 
   const toggleMaterial = (mat) => {
@@ -212,27 +211,11 @@ export default function ProductsPage() {
             {/* Top Stat Boxes Container */}
             <div className="flex flex-wrap gap-4">
               {/* Dynamic Showing Count */}
-              <div className="products-stat-box border border-outline-variant px-4 py-2 bg-surface min-w-[140px]">
+              <div className="products-stat-box border border-outline-variant px-4 py-2 bg-surface min-w-[140px] flex items-center justify-center gap-2">
                 <span className="font-mono text-sm block text-secondary uppercase">
-                  Showing
-                </span>
-                <span className="font-display text-xl font-bold text-on-background uppercase">
-                  {filteredProducts.length} Print{filteredProducts.length !== 1 ? 's' : ''}
+                  {`Showing ${filteredProducts.length} Print${filteredProducts.length !== 1 ? 's' : ''}`}
                 </span>
               </div>
-              
-              {/* Remaining Static Boxes (skips the first "CATALOG" box) */}
-              {STAT_BOXES.slice(1).map((box) => (
-                <div
-                  key={box.label}
-                  className="products-stat-box border border-outline-variant px-4 py-2 bg-surface"
-                >
-                  <span className="font-mono text-sm block text-secondary">{box.label}</span>
-                  <span className="font-display text-xl font-bold text-on-background">
-                    {box.value}
-                  </span>
-                </div>
-              ))}
             </div>
           </div>
         </header>

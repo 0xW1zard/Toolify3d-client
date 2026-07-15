@@ -1,19 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthPageLayout from "@/components/auth/AuthPageLayout";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { useToast } from "@/components/providers/ToastProvider";
 import { authClient } from "@/lib/auth-client";
+import {
+  getSafeNextPath,
+  googleCallbackPath,
+  loginPath,
+} from "@/lib/auth-redirect";
+import { isUserAlreadyExistsError } from "@/lib/auth-errors";
 
 const inputClassName =
   "w-full bg-white border border-outline-variant px-4 py-3 rounded-sm font-body text-on-surface transition-all placeholder:text-outline focus:outline-2 focus:outline-brand focus:outline-offset-2";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
+
+  const nextPath = getSafeNextPath(searchParams.get("next"));
+  const googleCallback = googleCallbackPath(nextPath);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,8 +39,6 @@ export default function RegisterPage() {
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
     const trimmedPhone = phone.trim();
-
-    console.log(trimmedName, trimmedEmail, trimmedPhone, password, confirmPassword);
 
     if (password !== confirmPassword) {
       showToast("Passwords do not match.", "error");
@@ -53,13 +61,18 @@ export default function RegisterPage() {
       });
 
       if (error) {
+        if (isUserAlreadyExistsError(error)) {
+          showToast("This account already exists. Please log in.", "error");
+          router.push(loginPath(nextPath));
+          return;
+        }
+
         showToast(error.message || "Could not create your account.", "error");
-        console.log(error);
         return;
       }
 
       showToast("Account created. Redirecting to Terminal...", "success");
-      window.setTimeout(() => router.push("/"), 1500);
+      window.setTimeout(() => router.push(nextPath), 1500);
     } catch {
       showToast("Something went wrong. Please try again.", "error");
     } finally {
@@ -222,15 +235,37 @@ export default function RegisterPage() {
             <p className="font-body text-secondary text-sm">
               Already have an account?{" "}
               <Link
-                href="/login"
+                href={loginPath(nextPath)}
                 className="text-brand font-bold hover:underline underline-offset-4"
               >
                 Sign In
               </Link>
             </p>
-            <GoogleSignInButton onError={(message) => showToast(message, "error")} />
+            <GoogleSignInButton
+              callbackURL={googleCallback}
+              onError={(message) => showToast(message, "error")}
+            />
           </div>
         </div>
     </AuthPageLayout>
+  );
+}
+
+function RegisterLoading() {
+  return (
+    <AuthPageLayout maxWidth="max-w-[525px]">
+      <div className="bg-white text-dark p-8 rounded-sm shadow-2xl border border-border text-center">
+        <p className="font-mono text-sm text-brand tracking-wide">{"// LOADING"}</p>
+        <p className="font-body text-secondary mt-2">One moment...</p>
+      </div>
+    </AuthPageLayout>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterLoading />}>
+      <RegisterForm />
+    </Suspense>
   );
 }

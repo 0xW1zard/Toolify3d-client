@@ -17,6 +17,10 @@ export function useGsap(callback, deps = [], { scopeRef = null, scrollTrigger = 
       const { gsap, ScrollTrigger } = await loadGsap({ scrollTrigger });
       if (cancelled) return;
 
+      // Skip when a scope ref is required but the DOM node isn't mounted yet
+      // (e.g. content still behind a loading gate).
+      if (scopeRef && !scopeRef.current) return;
+
       ctx = gsap.context(() => {
         callback(gsap, ScrollTrigger);
       }, scopeRef?.current || undefined);

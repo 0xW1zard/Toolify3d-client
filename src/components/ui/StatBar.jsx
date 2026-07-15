@@ -5,7 +5,7 @@ export default function StatBar({ stats, className = '' }) {
       {stats.map((stat, i) => (
         <div
           key={stat.label}
-          className={`flex flex-col items-center md:items-start ${
+          className={`flex flex-col items-center justify-center text-center ${
             i < stats.length - 1 ? 'md:border-r border-white/10' : ''
           }`}
         >

@@ -7,6 +7,7 @@ import { useToast } from '@/components/providers/ToastProvider';
 import { apiFetch, clearAccessToken } from '@/lib/api/client';
 import { authClient } from '@/lib/auth-client';
 import { hasPhoneNumber } from '@/lib/auth/phone';
+import { loginPath } from '@/lib/auth-redirect';
 import {
   mapCartItemFromApi,
   mapOrderForDisplay,
@@ -81,8 +82,8 @@ export function useDashboardData() {
 
   useEffect(() => {
     if (isPending) return;
-    if (!session?.user) router.replace('/login');
-  }, [isPending, session, router]);
+    if (!session?.user) router.replace(loginPath(pathname || '/dashboard'));
+  }, [isPending, session, router, pathname]);
 
   useEffect(() => {
     if (!tokenReady) return;
@@ -172,7 +173,17 @@ export function useDashboardData() {
         prev.filter((item) => !matchesCartItem(item, productId, customText, colorHex))
       );
 
-      if (!productId || isCustomOrder) return;
+      if (!productId || isCustomOrder) {
+        if (isCustomOrder && customOrderState?.order) {
+          sessionStorage.removeItem(CUSTOM_ORDER_KEY);
+          try {
+            await clearCustomOrderFile(customOrderState.order.fileKey);
+          } catch (err) {
+            console.error('Failed to clear custom order file:', err);
+          }
+        }
+        return;
+      }
 
       try {
         await apiFetch(
@@ -184,7 +195,7 @@ export function useDashboardData() {
         console.error('Failed to remove cart item:', err);
       }
     },
-    [isCustomOrder, refreshCart]
+    [isCustomOrder, customOrderState, refreshCart]
   );
 
   const handleSaveProfile = useCallback(async (nextProfile) => {
@@ -359,6 +370,7 @@ export function useDashboardData() {
     async (product, quantity = 1, customText = '', selectedColor = null) => {
       if (!session?.user) {
         showToast('Please log in to add items to your cart.', 'error');
+        router.push(loginPath(pathname || '/dashboard'));
         return false;
       }
 
@@ -389,7 +401,7 @@ export function useDashboardData() {
         return false;
       }
     },
-    [session, tokenReady, reloadCartItems, showToast]
+    [session, tokenReady, reloadCartItems, showToast, router, pathname]
   );
 
   const handleLogout = useCallback(async () => {

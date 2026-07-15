@@ -9,6 +9,7 @@ import { useApi } from "@/components/providers/ApiProvider";
 import { apiFetch } from "@/lib/api/client";
 import { authClient } from "@/lib/auth-client";
 import { hasPhoneNumber, isValidPhone } from "@/lib/auth/phone";
+import { getSafeNextPath, loginPath } from "@/lib/auth-redirect";
 
 const inputClassName =
   "w-full bg-white border border-outline-variant px-4 py-3 rounded-sm font-body text-on-surface transition-all placeholder:text-outline focus:outline-2 focus:outline-brand focus:outline-offset-2";
@@ -34,13 +35,13 @@ function CompleteProfileForm() {
   const [isChecking, setIsChecking] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const nextPath = searchParams.get("next") || "/";
+  const nextPath = getSafeNextPath(searchParams.get("next"));
 
   useEffect(() => {
     if (isPending) return;
 
     if (!session?.user) {
-      router.replace("/login");
+      router.replace(loginPath(nextPath === "/" ? "/complete-profile" : nextPath));
       return;
     }
 

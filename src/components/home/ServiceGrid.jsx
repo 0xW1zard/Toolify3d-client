@@ -2,7 +2,7 @@ import Section from '@/components/layout/Section';
 import SectionHeader from '@/components/ui/SectionHeader';
 
 const SERVICES = [
-  { icon: '3d_rotation', title: '3D Printing', desc: 'High-fidelity FDM printing for durable prototypes.' },
+  { icon: '3d_rotation', title: '3D Printing', desc: 'High-fidelity 3D printing for durable prototypes.' },
   { icon: 'architecture', title: 'Custom Modeling', desc: 'Professional CAD services from sketches to prints.' },
   { icon: 'local_shipping', title: 'Rapid Delivery', desc: '48-hour delivery across all major districts.' },
 ];
@@ -19,7 +19,10 @@ export default function ServiceGrid() {
         {SERVICES.map((service) => (
           <div key={service.title} className="bg-alt-bg p-6 border border-border rounded-sm flex flex-col group">
             <div className="h-52 bg-dark mb-5 flex items-center justify-center overflow-hidden rounded-sm">
-              <span className="material-symbols-outlined text-white text-[64px] group-hover:scale-110 transition-transform duration-300">
+              <span
+                className="material-symbols-outlined text-white text-[60px]! leading-none group-hover:scale-110 transition-transform duration-300"
+                style={{ fontVariationSettings: "'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 48" }}
+              >
                 {service.icon}
               </span>
             </div>

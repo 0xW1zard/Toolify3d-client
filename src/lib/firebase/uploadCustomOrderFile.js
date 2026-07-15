@@ -1,5 +1,6 @@
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/firebase';
+import { ensureFirebaseAuth } from '@/lib/firebase/ensureFirebaseAuth';
 
 // Uploads the printable model file directly to Firebase Storage and returns a
 // permanent download URL. Only this URL string is persisted in MongoDB, keeping
@@ -7,6 +8,8 @@ import { storage } from '@/firebase';
 //
 // Path: custom-orders/{userId}/{uuid}/{fileName}
 export async function uploadCustomOrderFile(userId, file) {
+  await ensureFirebaseAuth();
+
   const storagePath = `custom-orders/${userId}/${crypto.randomUUID()}/${file.name}`;
   const storageRef = ref(storage, storagePath);
 

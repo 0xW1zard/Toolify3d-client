@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import PageShell from "@/components/layout/PageShell";
 import WhatsAppLink from "@/components/ui/WhatsAppLink";
@@ -30,7 +30,7 @@ const storyNodes = [
     label: "// CHAPTER_03",
     year: "[YEAR]",
     title: "64 DISTRICTS",
-    body: "Started in Dhaka. Now shipping anywhere in Bangladesh. 500+ prints and counting.",
+    body: "Started in Dhaka. Now shipping anywhere in Bangladesh. 200+ prints and counting.",
     visual: "stats",
   },
 ];
@@ -40,36 +40,36 @@ const founderJourney = [
   {
     photo: 1,
     label: "// ORIGIN",
-    title: "[FOUNDER NAME]",
-    meta: "[CITY] · [FIELD] · [YEAR STARTED]",
-    body: "[Short founder origin — where they are from, what they studied, what sparked interest in 3D printing. 2–3 lines max.]",
+    title: "[Shahabor Hossain Rifat]",
+    meta: "[Dhaka] · [MAKER] · [2026]",
+    body: "A Bangladeshi robotics and cybersecurity enthusiast who loves to 'build and break stuff'. Shahabor founded CirkitBot to empower the next generation of robotics , and Toolify 3D to turn digital concepts into physical reality.",
   },
   {
     photo: 2,
     label: "// THE_SPARK",
     title: "HOW IT STARTED",
-    body: "[What moment made the founder start Toolify 3D. The frustration, first printer, first customer. Human and direct.]",
-    quote: "[Short founder quote about starting the business]",
+    body: "Tired of waiting weeks for custom parts, robotics builder Shahabor teamed up with co-founder Nafizul Islam. Armed with their first printer, they launched Toolify 3D to give local makers the fast, high-quality prototyping they needed.",
+    quote: "We started Toolify 3D to bring great designs from screens and compile them into reality.",
   },
   {
     photo: 3,
     label: "// THE_MISSION",
     title: "WHY WE PRINT",
-    body: "[Founder personal mission — what they believe about making and Bangladesh's maker community.]",
+    body: "Bangladesh is full of brilliant creators, but too many ideas stay trapped on screens due to a lack of local prototyping tools. We don’t just print parts—we exist to empower local makers, hackers, and engineers to physically compile their ideas into reality.",
     stats: true,
   },
   {
     photo: 4,
     label: "// TODAY",
     title: "NOW",
-    body: "[What the founder is working on now — growing Toolify 3D, new materials, vision for the future.]",
+    body: "Growing Toolify 3D, expanding our reach, and pushing the boundaries of what’s possible with 3D printing in Bangladesh.",
     cta: true,
   },
 ];
 
 // ── STATS DATA ──
 const statsData = [
-  { number: "500+", label: "PRINTS MADE" },
+  { number: "200+", label: "PRINTS MADE" },
   { number: "64", label: "DISTRICTS" },
   { number: "1–4", label: "DAYS TURNAROUND" },
   { number: "3", label: "MATERIALS" },
@@ -103,7 +103,7 @@ const printers = [
   },
 ];
 
-const founderImages =[
+const founderImages = [
   { id: 1, image: "https://images.unsplash.com/photo-1618088129969-bcb0c051985e?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Founder 1" },
   { id: 2, image: "https://images.unsplash.com/photo-1756699272353-8e57fb998f3b?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Founder 2" },
   { id: 3, image: "https://images.unsplash.com/photo-1756699276817-584aa723cbc4?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", alt: "Founder 3" },
@@ -114,8 +114,9 @@ export default function AboutPage() {
   const [activePhoto, setActivePhoto] = useState(1);
   const storyNodeRefs = useRef([]);
   const storyDotRefs = useRef([]);
+  const storyImageRef = useRef(null);
 
-  useGsap((gsap) => {
+  useGsap((gsap, ScrollTrigger) => {
     gsap.from(".hero-line", {
       clipPath: "inset(0 0 100% 0)",
       y: 40,
@@ -154,125 +155,180 @@ export default function AboutPage() {
       }
     });
 
+    if (storyImageRef.current) {
+      const frame = storyImageRef.current;
+      const img = frame.querySelector("img");
+      const mm = gsap.matchMedia();
+
+      mm.add(
+        {
+          isDesktop: "(min-width: 1024px)",
+          isMobile: "(max-width: 1023px)",
+          reduceMotion: "(prefers-reduced-motion: reduce)",
+        },
+        (context) => {
+          const { isDesktop, reduceMotion } = context.conditions;
+          if (reduceMotion) return;
+
+          gsap.fromTo(
+            frame,
+            {
+              clipPath: "inset(10% 10% 10% 10% round 12px)",
+              opacity: 0,
+              x: isDesktop ? 48 : 0,
+              y: isDesktop ? 0 : 36,
+            },
+            {
+              clipPath: "inset(0% 0% 0% 0% round 12px)",
+              opacity: 1,
+              x: 0,
+              y: 0,
+              duration: 1.1,
+              ease: "power3.out",
+              scrollTrigger: {
+                trigger: frame,
+                start: "top 85%",
+                once: true,
+              },
+            },
+          );
+
+          if (img) {
+            gsap.fromTo(
+              img,
+              { scale: 1.18 },
+              {
+                scale: 1,
+                duration: 1.4,
+                ease: "power2.out",
+                scrollTrigger: {
+                  trigger: frame,
+                  start: "top 85%",
+                  once: true,
+                },
+              },
+            );
+          }
+        },
+      );
+    }
+
+    // Sticky founder photo swap — desktop/tablet side-by-side layout only
+    const founderMm = gsap.matchMedia();
+    founderMm.add("(min-width: 768px)", () => {
+      const nodes = gsap.utils.toArray(".founder-node");
+      nodes.forEach((node) => {
+        const photo = parseInt(node.dataset.photo, 10);
+        if (!photo) return;
+
+        ScrollTrigger.create({
+          trigger: node,
+          start: "top center",
+          end: "bottom center",
+          onEnter: () => setActivePhoto(photo),
+          onEnterBack: () => setActivePhoto(photo),
+        });
+      });
+    });
+
     fadeUpOnScroll(gsap, '.reveal-text', { y: 20 });
     staggerRevealOnScroll(gsap, '.reveal-card', { step: 0.1, y: 24, duration: 0.7 });
-  }, []);
-
-  // ── STEP 6: Photo Swap IntersectionObserver ──
-  useEffect(() => {
-    if (!("IntersectionObserver" in window)) return;
-
-    const nodes = document.querySelectorAll(".founder-node");
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const photoIndex = parseInt(entry.target.dataset.photo);
-            setActivePhoto(photoIndex);
-          }
-        });
-      },
-      {
-        threshold: 0.5,
-        rootMargin: "-20% 0px -20% 0px",
-      },
-    );
-
-    nodes.forEach((node) => observer.observe(node));
-
-    return () => observer.disconnect();
   }, []);
 
   return (
     <PageShell>
       {/* ═══════════════════════════════════════════
-          STEP 2 — HERO
+          HERO + MISSION (single bg image)
           ═══════════════════════════════════════════ */}
       <section
         id="hero"
-        className="bg-[#0D0D0D] min-h-[70vh] flex items-end pb-16 pt-20 px-margin-page"
+        className="relative min-h-[80vh] md:min-h-[95vh] flex flex-col overflow-hidden bg-[#0D0D0D] px-margin-page pt-20"
       >
-        <div className="max-w-container-max mx-auto w-full">
-          <div className="flex justify-between items-end flex-col md:flex-row gap-8">
-            {/* LEFT */}
-            <div>
-              <span
-                className="font-mono text-xs text-[#1DB954] uppercase"
-                style={{ letterSpacing: "0.15em" }}
-              >
-                {"// ABOUT_US"}
-              </span>
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat sm:bg-center"
+          style={{ backgroundImage: "url(/media/gal/aboutHero.JPG)", backgroundSize: "cover" }}
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-[#0D0D0D]/65"
+          aria-hidden="true"
+        />
 
-              <h1 className="font-display font-extrabold text-[48px] md:text-[64px] text-white leading-none tracking-tight mt-4">
-                <div className="overflow-hidden">
-                  <div className="hero-line">COMPILING</div>
-                </div>
-                <div className="overflow-hidden">
-                  <div className="hero-line">IDEAS</div>
-                </div>
-                <div className="overflow-hidden">
-                  <div className="hero-line">
-                    INTO <span className="text-[#1DB954]">REALITY.</span>
+        <div className="relative z-10 max-w-container-max mx-auto w-full flex flex-1 flex-col min-h-0">
+          <div className="flex flex-1 flex-col justify-end pb-10 md:pb-16 min-h-0">
+            <div className="flex justify-between items-end pb-16 md:pb-25 flex-col md:flex-row gap-8">
+              <div>
+                <span
+                  className="font-mono text-xs text-[#1DB954] uppercase"
+                  style={{ letterSpacing: "0.15em" }}
+                >
+                  {"// ABOUT_US"}
+                </span>
+
+                <h1 className="font-display font-extrabold text-[48px] md:text-[64px] text-white leading-none tracking-tight mt-4">
+                  <div className="overflow-hidden">
+                    <div className="hero-line">COMPILING</div>
                   </div>
-                </div>
-              </h1>
-            </div>
+                  <div className="overflow-hidden">
+                    <div className="hero-line">IDEAS</div>
+                  </div>
+                  <div className="overflow-hidden">
+                    <div className="hero-line">
+                      INTO <span className="text-[#1DB954]">REALITY.</span>
+                    </div>
+                  </div>
+                </h1>
+              </div>
 
-            {/* RIGHT — hidden on mobile */}
-            <div className="hidden md:flex flex-col items-end gap-1">
-              <span className="font-mono text-xs text-[#9E9E9E] text-right">
-                EST. [YEAR]
-              </span>
-              <span className="font-mono text-xs text-[#9E9E9E] text-right">
-                DHAKA, BANGLADESH
-              </span>
-              <span className="font-mono text-xs text-[#9E9E9E] text-right">
-                FDM PRINTING
-              </span>
-              <span className="font-mono text-xs text-[#9E9E9E] text-right">
-                PLA+ · PETG · TPU
-              </span>
-              <div className="w-16 h-px bg-[#2A2A2A] mt-3 ml-auto"></div>
+              <div className="hidden md:flex flex-col items-end gap-1">
+                <span className="font-mono text-xs text-white/50 text-right">
+                  EST. [2026]
+                </span>
+                <span className="font-mono text-xs text-white/50 text-right">
+                  DHAKA, BANGLADESH
+                </span>
+                <span className="font-mono text-xs text-white/50 text-right">
+                  3D PRINTING
+                </span>
+                <span className="font-mono text-xs text-white/50 text-right">
+                  PLA+ · PETG · TPU
+                </span>
+                <div className="w-16 h-px bg-white/20 mt-3 ml-auto" />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════
-          STEP 2 — MISSION
-          ═══════════════════════════════════════════ */}
-      <section
-        id="mission"
-        className="bg-[#0D0D0D] border-t border-[#1A1A1A] py-16 text-center"
-      >
-        <div className="max-w-3xl mx-auto px-4">
-          <p className="font-display font-extrabold text-3xl md:text-4xl text-white leading-tight">
-            Anyone with an idea deserves the tools
-            <br />
-            that make it <span className="text-[#1DB954]">real.</span>
-          </p>
+          <div
+            id="mission"
+            className="border-t border-white/10 py-8 md:py-14 text-center shrink-0"
+          >
+            <p className="font-display font-extrabold text-3xl md:text-4xl text-white leading-tight max-w-3xl mx-auto">
+              Anyone with an idea deserves the tools
+              <br />
+              that make it <span className="text-[#1DB954]">real.</span>
+            </p>
+          </div>
         </div>
       </section>
 
       {/* ═══════════════════════════════════════════
           STEP 3 — BRAND STORY TIMELINE
           ═══════════════════════════════════════════ */}
-      <section id="brand-story" className="bg-white py-20 ">
+      <section id="brand-story" className="bg-white py-12 md:py-20 px-margin-page overflow-hidden">
         {/* Header */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-10 md:mb-16">
           <span
             className="font-mono text-xs text-[#1DB954] uppercase"
             style={{ letterSpacing: "0.15em" }}
           >
             {"// OUR.STORY"}
           </span>
-          <h2 className="font-display font-bold text-[32px] text-[#0D0D0D] mt-2">
+          <h2 className="font-display font-bold text-[28px] md:text-[32px] text-[#0D0D0D] mt-2">
             How It Started
           </h2>
         </div>
-        <div className="max-w-container-max mx-auto px-margin-page flex gap-10 justify-between items-center">
-          <div className="w-3/5 mx-auto px-4 md:px-8">
+        <div className="max-w-container-max mx-auto flex flex-col lg:flex-row gap-8 lg:gap-10 justify-between items-stretch lg:items-center">
+          <div className="w-full lg:w-3/5 lg:pr-4">
             {/* Timeline */}
             <div className="relative">
               {/* Left rail */}
@@ -283,7 +339,7 @@ export default function AboutPage() {
                 <div
                   key={node.id}
                   ref={(el) => (storyNodeRefs.current[i] = el)}
-                  className="flex gap-10 mb-20 last:mb-0 relative items-start"
+                  className="flex gap-6 md:gap-10 mb-14 md:mb-20 last:mb-0 relative items-start"
                 >
                   {/* Node Marker */}
                   <div className="flex-shrink-0 w-10 flex flex-col items-center">
@@ -297,31 +353,31 @@ export default function AboutPage() {
                   </div>
 
                   {/* Node Content */}
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <span
                       className="font-mono text-[9px] text-[#1DB954] uppercase"
                       style={{ letterSpacing: "0.15em" }}
                     >
                       {node.label}
                     </span>
-                    <h3 className="font-display font-bold text-2xl text-[#0D0D0D] mt-1">
+                    <h3 className="font-display font-bold text-xl md:text-2xl text-[#0D0D0D] mt-1">
                       {node.title}
                     </h3>
-                    <p className="font-body text-base text-[#3D3D3D] mt-2 leading-relaxed max-w-container-max">
+                    <p className="font-body text-sm md:text-base text-[#3D3D3D] mt-2 leading-relaxed">
                       {node.body}
                     </p>
 
                     {/* Visual Anchors */}
                     {node.visual === "quote" && (
                       <div className="bg-[#F5F5F5] border-l-2 border-[#1DB954] pl-4 py-3 rounded-sm mt-4">
-                        <p className="font-display font-semibold text-lg text-[#0D0D0D] italic">
+                        <p className="font-display font-semibold text-base md:text-lg text-[#0D0D0D] italic">
                           {node.quoteText}
                         </p>
                       </div>
                     )}
 
                     {node.visual === "materials" && (
-                      <div className="flex gap-3 mt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
                         {[
                           {
                             name: "PLA+",
@@ -341,7 +397,7 @@ export default function AboutPage() {
                         ].map((mat) => (
                           <div
                             key={mat.name}
-                            className={`border-2 rounded px-4 py-2 text-center flex-1 ${mat.border}`}
+                            className={`border-2 rounded px-4 py-2 text-center ${mat.border}`}
                           >
                             <div className="font-display font-bold text-lg">
                               {mat.name}
@@ -355,27 +411,25 @@ export default function AboutPage() {
                     )}
 
                     {node.visual === "stats" && (
-                      <div className="bg-[#0D0D0D] rounded p-5 flex gap-6 items-center justify-around mt-4">
+                      <div className="bg-[#0D0D0D] rounded p-4 md:p-5 grid grid-cols-3 gap-2 md:gap-6 items-center mt-4">
                         <div className="text-center">
-                          <div className="font-display font-extrabold text-4xl text-white">
-                            500+
+                          <div className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-white">
+                            200+
                           </div>
                           <div className="font-mono text-[9px] text-[#9E9E9E] uppercase mt-1">
                             PRINTS
                           </div>
                         </div>
-                        <div className="w-px h-8 bg-[#2A2A2A]"></div>
-                        <div className="text-center">
-                          <div className="font-display font-extrabold text-4xl text-white">
+                        <div className="text-center border-x border-[#2A2A2A]">
+                          <div className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-white">
                             64
                           </div>
                           <div className="font-mono text-[9px] text-[#9E9E9E] uppercase mt-1">
                             DISTRICTS
                           </div>
                         </div>
-                        <div className="w-px h-8 bg-[#2A2A2A]"></div>
                         <div className="text-center">
-                          <div className="font-display font-extrabold text-4xl text-white">
+                          <div className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-white">
                             1–4
                           </div>
                           <div className="font-mono text-[9px] text-[#9E9E9E] uppercase mt-1">
@@ -389,13 +443,18 @@ export default function AboutPage() {
               ))}
             </div>
           </div>
-          <div className="w-2/5 h-[700px] overflow-hidden border-2 border-[#0D0D0D] rounded-lg p-2 bg-white">
+          <div
+            ref={storyImageRef}
+            className="w-full lg:w-2/5 h-[320px] sm:h-[420px] md:h-[520px] lg:h-[700px] overflow-hidden bg-white rounded-xl will-change-transform"
+            style={{ border: "1.5px dashed #0D0D0D" }}
+          >
             <Image
-              src="https://images.unsplash.com/photo-1603974739172-4ad6a3117e40?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+              src="/media/gal/about2nd.JPG"
               alt="Story Timeline"
-              width={500} loading="eager"
-              height={500}
-              className="w-full h-auto rounded-sm"
+              width={500}
+              height={700}
+              loading="eager"
+              className="w-full h-full rounded-xl object-cover"
             />
           </div>
         </div>
@@ -404,25 +463,25 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════
           STEPS 4, 5, 6 — FOUNDER SECTION
           ═══════════════════════════════════════════ */}
-      <section id="founder" className="bg-[#F5F5F5] py-20 px-margin-page">
+      <section id="founder" className="bg-[#F5F5F5] py-12 md:py-20 px-margin-page">
         <div className="max-w-container-max mx-auto">
           {/* Section Header */}
-          <div className="text-center mb-14">
+          <div className="text-center mb-10 md:mb-14">
             <span
               className="font-mono text-xs text-[#1DB954] uppercase"
               style={{ letterSpacing: "0.15em" }}
             >
               {"// FOUNDER"}
             </span>
-            <h2 className="font-display font-bold text-[32px] text-[#0D0D0D] mt-2">
+            <h2 className="font-display font-bold text-[24px] sm:text-[28px] md:text-[32px] text-[#0D0D0D] mt-2 px-2">
               THE PERSON BEHIND THE PRINTS
             </h2>
           </div>
 
           {/* 2-col layout */}
-          <div className="flex flex-col md:flex-row gap-16 items-start">
+          <div className="flex flex-col md:flex-row gap-10 md:gap-16 items-start">
             {/* LEFT COL — Sticky Photo Frame */}
-            <div className="md:w-[380px] flex-shrink-0 md:sticky top-60">
+            <div className="w-full max-w-[380px] mx-auto md:mx-0 md:w-[380px] flex-shrink-0 md:sticky md:top-24">
               {/* Photo Frame */}
               <div className="border-2 border-[#0D0D0D] rounded p-2 bg-white">
                 <div className="relative aspect-[3/4] bg-[#E5E5E5] overflow-hidden rounded-sm">
@@ -430,20 +489,19 @@ export default function AboutPage() {
                   {founderImages.map((image) => (
                     <div
                       key={image.id}
-                      className={`absolute inset-0 transition-opacity duration-700 ease-in-out bg-[#E5E5E5] flex items-center justify-center ${
-                        activePhoto === image.id ? "opacity-100" : "opacity-0"
-                      }`}
+                      className={`absolute inset-0 transition-opacity duration-700 ease-in-out bg-[#E5E5E5] flex items-center justify-center ${activePhoto === image.id ? "opacity-100" : "opacity-0"
+                        }`}
                       data-index={image.id}
                     >
                       <span className="font-mono text-[10px] text-[#9E9E9E]">{`// FOUNDER_PHOTO_${image.id}`}</span>
                       <Image
-  src={image.image}
-  alt={image.alt}
-  fill
-  priority
-  className="object-cover object-top"
-  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
-/>
+                        src={image.image}
+                        alt={image.alt}
+                        fill
+                        priority
+                        className="object-cover object-top"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
                     </div>
                   ))}
 
@@ -458,7 +516,7 @@ export default function AboutPage() {
               {/* Name Plate */}
               <div className="mt-4 text-center">
                 <div className="font-display font-bold text-xl text-[#0D0D0D]">
-                  [FOUNDER NAME]
+                  [Shahabor Hossain Rifat]
                 </div>
                 <div className="font-mono text-xs text-[#9E9E9E] uppercase tracking-widest mt-1">
                   FOUNDER & MAKER · TOOLIFY 3D
@@ -468,10 +526,10 @@ export default function AboutPage() {
 
             {/* RIGHT COL — Founder Journey Nodes */}
             <div className="flex-1">
-              {founderJourney.map((node, i) => (
+              {founderJourney.map((node) => (
                 <div
                   key={node.label}
-                  className="founder-node mb-20 last:mb-0"
+                  className="founder-node mb-14 md:mb-20 last:mb-0"
                   data-photo={node.photo}
                 >
                   <span
@@ -480,7 +538,7 @@ export default function AboutPage() {
                   >
                     {node.label}
                   </span>
-                  <h3 className="font-display font-bold text-2xl text-[#0D0D0D] mt-1">
+                  <h3 className="font-display font-bold text-xl md:text-2xl text-[#0D0D0D] mt-1">
                     {node.title}
                   </h3>
 
@@ -490,7 +548,7 @@ export default function AboutPage() {
                     </div>
                   )}
 
-                  <p className="font-body text-base text-[#3D3D3D] mt-3 leading-relaxed max-w-container-max">
+                  <p className="font-body text-sm md:text-base text-[#3D3D3D] mt-3 leading-relaxed">
                     {node.body}
                   </p>
 
@@ -508,7 +566,7 @@ export default function AboutPage() {
                     <div className="flex gap-4 mt-4 items-center">
                       <div>
                         <div className="font-display font-bold text-2xl text-[#0D0D0D]">
-                          500+
+                          200+
                         </div>
                         <div className="font-mono text-[9px] text-[#9E9E9E] uppercase mt-0.5">
                           PRINTS MADE
@@ -528,15 +586,15 @@ export default function AboutPage() {
 
                   {/* Optional: CTA Buttons */}
                   {node.cta && (
-                    <div className="flex gap-3 mt-5">
+                    <div className="flex flex-col sm:flex-row gap-3 mt-5">
                       <a
                         href="/products"
-                        className="bg-[#1DB954] text-[#0D0D0D] font-body font-semibold text-xs px-4 py-2 rounded-sm hover:bg-[#15883C] transition-colors"
+                        className="bg-[#1DB954] text-[#0D0D0D] font-body font-semibold text-xs px-4 py-2 rounded-sm hover:bg-[#15883C] transition-colors text-center"
                       >
                         See Our Products
                       </a>
                       <WhatsAppLink
-                        className="border border-[#0D0D0D] text-[#0D0D0D] font-body font-semibold text-xs px-4 py-2 rounded-sm hover:bg-[#0D0D0D] hover:text-white transition-colors"
+                        className="border border-[#0D0D0D] text-[#0D0D0D] font-body font-semibold text-xs px-4 py-2 rounded-sm hover:bg-[#0D0D0D] hover:text-white transition-colors text-center"
                       >
                         Message Founder ↗
                       </WhatsAppLink>
@@ -552,7 +610,7 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════
           STEP 7 — STATS
           ═══════════════════════════════════════════ */}
-      <section id="stats" className="bg-[#0D0D0D] py-16 px-margin-page">
+      <section id="stats" className="bg-[#0D0D0D] py-12 md:py-16 px-margin-page">
         <div className="max-w-container-max mx-auto">
           <div className="text-center">
             <span
@@ -563,16 +621,16 @@ export default function AboutPage() {
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-8 md:mt-10">
             {statsData.map((stat) => (
               <div
                 key={stat.label}
-                className="border border-[#1A1A1A] rounded p-8 text-center hover:border-[#1DB954] transition-all duration-200 cursor-default"
+                className="border border-[#1A1A1A] rounded p-4 sm:p-6 md:p-8 text-center hover:border-[#1DB954] transition-all duration-200 cursor-default"
               >
-                <div className="font-display font-extrabold text-5xl text-white">
+                <div className="font-display font-extrabold text-3xl sm:text-4xl md:text-5xl text-white">
                   {stat.number}
                 </div>
-                <div className="font-mono text-[10px] text-[#9E9E9E] uppercase tracking-widest mt-2">
+                <div className="font-mono text-[9px] sm:text-[10px] text-[#9E9E9E] uppercase tracking-widest mt-2">
                   {stat.label}
                 </div>
               </div>
@@ -590,11 +648,11 @@ export default function AboutPage() {
             <span className="font-mono text-sm text-primary uppercase tracking-widest mb-stack-md block">
               {'// OUR.EQUIPMENT'}
             </span>
-            <h2 className="reveal-text font-display font-bold text-[32px] text-on-background">
+            <h2 className="reveal-text font-display font-bold text-[28px] md:text-[32px] text-on-background">
               What We Print With
             </h2>
             <p className="reveal-text font-body text-base text-[#9E9E9E]">
-              Professional FDM printers for precise, reliable output every time.
+              Professional 3D printers for precise, reliable output every time.
             </p>
           </div>
 
@@ -637,18 +695,18 @@ export default function AboutPage() {
       {/* ═══════════════════════════════════════════
           STEP 7 — CTA
           ═══════════════════════════════════════════ */}
-      <section id="cta" className="bg-[#0D0D0D] py-16 px-margin-page">
+      <section id="cta" className="bg-[#0D0D0D] py-12 md:py-16 px-margin-page">
         <div className="max-w-container-max mx-auto">
           <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[#2A2A2A]">
             {/* LEFT */}
-            <div className="text-center py-10 md:flex-1">
+            <div className="text-center py-8 md:py-10 md:flex-1">
               <span
                 className="font-mono text-xs text-[#1DB954] uppercase"
                 style={{ letterSpacing: "0.15em" }}
               >
                 {"// GET_STARTED"}
               </span>
-              <h3 className="font-display font-bold text-2xl text-white mt-3">
+              <h3 className="font-display font-bold text-xl md:text-2xl text-white mt-3">
                 Have a Project?
               </h3>
               <a
@@ -660,14 +718,14 @@ export default function AboutPage() {
             </div>
 
             {/* RIGHT */}
-            <div className="text-center py-10 md:flex-1">
+            <div className="text-center py-8 md:py-10 md:flex-1">
               <span
                 className="font-mono text-xs text-[#1DB954] uppercase"
                 style={{ letterSpacing: "0.15em" }}
               >
                 {"// CONNECT"}
               </span>
-              <h3 className="font-display font-bold text-2xl text-white mt-3">
+              <h3 className="font-display font-bold text-xl md:text-2xl text-white mt-3">
                 Questions?
               </h3>
               <WhatsAppLink

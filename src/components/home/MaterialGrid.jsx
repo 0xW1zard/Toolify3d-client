@@ -12,7 +12,7 @@ export default function MaterialGrid() {
     <Section variant="alt" className="reveal-on-scroll">
       <SectionHeader
         eyebrow="// MATERIAL_LIBRARY"
-        title="Chemical Composition"
+        title="Materials Composition"
         className="mb-10"
       />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

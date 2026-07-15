@@ -48,9 +48,17 @@ export default function DashboardPage() {
     loadGsap();
   }, []);
 
+  const isContentLoading =
+    isPending || (session?.user && !tokenReady) || (session?.user && isLoading);
+  const contentReady = Boolean(session?.user && !isContentLoading);
+
   useGsap(
     (gsap) => {
-      gsap.from('.dashboard-reveal', {
+      if (!contentReady || !pageRef.current) return;
+      const targets = pageRef.current.querySelectorAll('.dashboard-reveal');
+      if (!targets.length) return;
+
+      gsap.from(targets, {
         y: 20,
         opacity: 0,
         duration: 0.6,
@@ -59,11 +67,11 @@ export default function DashboardPage() {
         delay: 0.1,
       });
     },
-    [],
+    [contentReady],
     { scopeRef: pageRef, scrollTrigger: false }
   );
 
-  if (isPending || (session?.user && !tokenReady) || (session?.user && isLoading)) {
+  if (isContentLoading) {
     return (
       <PageShell mainClassName="bg-background text-on-background min-h-screen">
         <div className="p-gutter md:p-margin-page max-w-container-max mx-auto w-full py-24 text-center">

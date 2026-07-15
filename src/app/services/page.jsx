@@ -63,25 +63,25 @@ const MATERIALS = [
 const PRINTERS = [
   {
     tag: '// HARDWARE_01',
-    brand: 'CREALITY INDUSTRIAL',
-    model: 'MODEL "K1 MAX"',
+    brand: 'BAMBU LAB',
+    model: 'MODEL "A1 COMBO"',
     specs: [
-      'VOL: 300 x 300 x 300 mm',
-      'SPEED: 600mm/s CoreXY',
-      'TEMP: Up to 300°C',
+      'VOL: 256 x 256 x 256 mm',
+      'SPEED: 500mm/s CoreXY Structure',
+      'TEMP: Up to 250°C',
     ],
-    bestFor: 'COMPLEX PARTS & ENCLOSURES',
+    bestFor: 'DESK ACCESSORIES & MULTI-COLOR MODELS',
   },
   {
     tag: '// HARDWARE_02',
     brand: 'BAMBU LAB',
-    model: 'MODEL "X1-CARBON"',
+    model: 'MODEL "A1 MINI"',
     specs: [
-      'AUTO BED LEVELING (LIDAR)',
-      'AI FIRST LAYER INSPECTION',
-      'CARBON FIBER FILAMENT READY',
+      'VOL: 180 x 180 x 180 mm',
+      'FULL AUTO AXIS COMPENSATION',
+      '20-MIN SETUP OUT OF BOX',
     ],
-    bestFor: 'ENGINEERING GRADE PROTOTYPES',
+    bestFor: 'COMPACT & HIGH-PRECISION QUICK PROTOTYPES',
   },
 ];
 
@@ -109,7 +109,14 @@ export default function ServicesPage() {
   return (
     <PageShell mainClassName="bg-white text-on-background font-body overflow-x-hidden selection:bg-primary-container selection:text-white">
         {/* HERO */}
-        <header className="bg-[#0D0D0D] min-h-[614px] flex items-end pb-16 relative overflow-hidden">
+        <header className="min-h-[614px] flex items-end pb-16 relative overflow-hidden" 
+        style={{ backgroundImage: 'url(/media/gal/serviceHero.JPG)', 
+        backgroundSize: 'cover', 
+        backgroundPosition: 'center', 
+        backgroundRepeat: 'no-repeat',
+        backgroundBlendMode: 'overlay',
+        backgroundColor: '#0D0D0D50',
+        opacity: 10 }}>
           <div className="max-w-container-max mx-auto px-margin-page w-full relative z-10 flex flex-col md:flex-row justify-between items-end gap-stack-lg">
             <div className="max-w-2xl">
               <span className="font-mono text-xs text-[#1DB954] uppercase tracking-[0.15em] font-medium leading-none mb-2 block">
@@ -123,7 +130,7 @@ export default function ServicesPage() {
             </div>
             <div className="flex flex-col gap-2 bg-[#1a1a1a] p-6 border-l-4 border-[#1DB954] min-w-[280px]">
               <div className="font-mono text-[10px] text-secondary tracking-widest uppercase">
-                SYST_PARAM: FDM PRINTING
+                SYST_PARAM: 3D PRINTING
               </div>
               <div className="font-mono text-white text-sm">PLA+ · PETG · TPU</div>
               <div className="font-mono text-[#1DB954] text-sm">1-4 DAYS TURNAROUND</div>
@@ -144,7 +151,7 @@ export default function ServicesPage() {
                   <span className="font-mono text-[10px] text-[#1DB954] block mb-2">{'// SERVICE_01'}</span>
                   <h2 className="font-display font-bold text-[32px] text-on-background mb-2">CUSTOM 3D PRINTING</h2>
                   <p className="font-body text-lg text-secondary mb-6">
-                    SEND FILE → WE PRINT. Industrial-grade FDM results for prototypes and end-use parts.
+                    SEND FILE → WE PRINT. Industrial-grade 3D results for prototypes and end-use parts.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {PRINTING_TAGS.map((tag) => (
@@ -245,7 +252,7 @@ export default function ServicesPage() {
               {/* Cell G: EQUIPMENT */}
               <div className="bento-cell col-span-12 md:col-span-3 border border-outline-variant p-8 flex flex-col bg-[#eef6e9]">
                 <span className="font-mono text-[10px] text-[#1DB954] block mb-2">{'// EQUIPMENT'}</span>
-                <h3 className="font-display font-semibold text-sm mb-2 leading-tight">PROFESSIONAL FDM PRINTERS</h3>
+                <h3 className="font-display font-semibold text-sm mb-2 leading-tight">PROFESSIONAL 3D PRINTERS</h3>
                 <div className="font-mono text-[10px] text-secondary mt-auto">
                   [BRAND] · 0.08MM LAYERS
                 </div>
