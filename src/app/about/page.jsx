@@ -244,9 +244,13 @@ export default function AboutPage() {
         id="hero"
         className="relative min-h-[80vh] md:min-h-[95vh] flex flex-col overflow-hidden bg-[#0D0D0D] px-margin-page pt-20"
       >
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat sm:bg-center"
-          style={{ backgroundImage: "url(/media/gal/aboutHero.JPG)", backgroundSize: "cover" }}
+        <Image
+          src="/media/gal/aboutHero.JPG"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
           aria-hidden="true"
         />
         <div

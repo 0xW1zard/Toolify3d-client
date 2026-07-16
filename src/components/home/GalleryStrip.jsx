@@ -52,7 +52,7 @@ export default function GalleryStrip() {
     <section className="bg-dark py-10 overflow-hidden">
       <div className="flex gap-4 px-4 animate-gallery">
         {gal.map((item) => (
-          <Image key={item.id} src={item.filename} alt={item.title} width={300} height={300} className="w-[300px] h-[300px] object-cover rounded-sm"
+          <Image key={item.id} src={item.filename} alt={item.title} width={200} height={200} className="w-[200px] h-[200px] object-cover rounded-sm"
           style={{ width: 'auto', height: 'auto' }} />
         ))}
       </div>

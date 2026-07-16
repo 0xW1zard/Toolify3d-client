@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import PageShell from '@/components/layout/PageShell';
 import { useGsap, fadeUpOnMount, fadeUpOnScroll, revealFromHidden } from '@/lib/gsap';
 
@@ -109,14 +110,17 @@ export default function ServicesPage() {
   return (
     <PageShell mainClassName="bg-white text-on-background font-body overflow-x-hidden selection:bg-primary-container selection:text-white">
         {/* HERO */}
-        <header className="min-h-[614px] flex items-end pb-16 relative overflow-hidden" 
-        style={{ backgroundImage: 'url(/media/gal/serviceHero.JPG)', 
-        backgroundSize: 'cover', 
-        backgroundPosition: 'center', 
-        backgroundRepeat: 'no-repeat',
-        backgroundBlendMode: 'overlay',
-        backgroundColor: '#0D0D0D50',
-        opacity: 10 }}>
+        <header className="min-h-[614px] flex items-end pb-16 relative overflow-hidden">
+          <Image
+            src="/media/gal/serviceHero.JPG"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+            aria-hidden="true"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-dark/50" aria-hidden="true" />
           <div className="max-w-container-max mx-auto px-margin-page w-full relative z-10 flex flex-col md:flex-row justify-between items-end gap-stack-lg">
             <div className="max-w-2xl">
               <span className="font-mono text-xs text-[#1DB954] uppercase tracking-[0.15em] font-medium leading-none mb-2 block">

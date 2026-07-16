@@ -21,7 +21,8 @@ export default function HeroSection() {
         muted
         loop
         playsInline
-        preload="auto"
+        preload="metadata"
+        poster="/media/hero-poster.jpg"
         aria-hidden="true"
       >
         <source src="/media/heroBG.webm" type="video/webm" />
